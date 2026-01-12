@@ -1,25 +1,27 @@
 import * as fs from "fs";
 import * as path from "path";
 import { config } from "dotenv";
-import { generateText } from "ai";
+import { generateText, generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 
-// Load environment variables from .env.local or .env
+// =============================================================================
+// CONFIGURATION & SETUP
+// =============================================================================
+
 const PROJECT_ROOT = process.cwd();
 const envLocalPath = path.join(PROJECT_ROOT, ".env.local");
 const envPath = path.join(PROJECT_ROOT, ".env");
 
-// Try .env.local first (Next.js convention), then fall back to .env
+// Load environment variables
 if (fs.existsSync(envLocalPath)) {
   config({ path: envLocalPath });
 } else if (fs.existsSync(envPath)) {
   config({ path: envPath });
 } else {
-  // Still try default dotenv behavior (loads .env from project root)
   config();
 }
 
-// Use process.cwd() to get the project root, then build paths relative to it
 const ROUTES_FILE = path.join(PROJECT_ROOT, "scripts", "routes.txt");
 const CONTENT_DIR = path.join(PROJECT_ROOT, "content");
 const EXA_API_KEY = process.env.EXA_API_KEY;
@@ -28,15 +30,17 @@ const EXA_API_BASE = "https://api.exa.ai/research/v1";
 
 if (!EXA_API_KEY) {
   console.error("Error: EXA_API_KEY environment variable is not set");
-  console.error("Please set EXA_API_KEY in .env.local or .env file");
   process.exit(1);
 }
 
 if (!ANTHROPIC_API_KEY) {
   console.error("Error: ANTHROPIC_API_KEY environment variable is not set");
-  console.error("Please set ANTHROPIC_API_KEY in .env.local or .env file");
   process.exit(1);
 }
+
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
 
 interface ResearchTask {
   researchId: string;
@@ -49,14 +53,64 @@ interface ResearchResult {
   researchId: string;
   status: string;
   output?: string | any;
-  outputSchema?: any;
   createdAt: number;
   completedAt?: number;
 }
 
-/**
- * Reads routes.txt and finds the first unprocessed area (line not starting with "x ")
- */
+// Route extracted from research
+const RouteSchema = z.object({
+  name: z.string().describe("The route name"),
+  grade: z.string().describe("The climbing grade (e.g., 5.10a, V4)"),
+  style: z.enum(["Trad", "Sport", "Boulder"]).describe("Climbing style"),
+  wall: z.string().describe("The wall or crag name"),
+  mpLink: z.string().url().describe("Mountain Project URL"),
+});
+
+type Route = z.infer<typeof RouteSchema>;
+
+// Route with validation status
+interface ValidatedRoute extends Route {
+  isValid: boolean;
+}
+
+// Categories for curation
+type CategoryName =
+  | "beginner"
+  | "intermediate"
+  | "hard"
+  | "classic"
+  | "epic"
+  | "boulders";
+
+const CuratedRoutesSchema = z.object({
+  beginner: z.array(RouteSchema).describe("Beginner routes (5.6-5.9)"),
+  intermediate: z
+    .array(RouteSchema)
+    .describe("Intermediate routes (5.10-5.11)"),
+  hard: z.array(RouteSchema).describe("Hard routes (5.12+)"),
+  classic: z.array(RouteSchema).describe("Classic/Iconic routes"),
+  epic: z.array(RouteSchema).describe("Epic/Long multi-pitch routes"),
+  boulders: z.array(RouteSchema).describe("Best boulder problems"),
+});
+
+type CuratedRoutes = z.infer<typeof CuratedRoutesSchema>;
+
+// Budget configuration
+const CATEGORY_BUDGETS = {
+  beginner: { min: 6, max: 10 },
+  intermediate: { min: 8, max: 12 },
+  hard: { min: 6, max: 10 },
+  classic: { min: 8, max: 12 }, // Must be highest or tied
+  epic: { min: 0, max: 8 }, // Optional
+  boulders: { min: 0, max: 8 }, // Optional
+};
+
+const TOTAL_ROUTE_TARGET = { min: 30, max: 45, absoluteMax: 50 };
+
+// =============================================================================
+// FILE OPERATIONS
+// =============================================================================
+
 function getNextArea(): string | null {
   try {
     const content = fs.readFileSync(ROUTES_FILE, "utf-8");
@@ -64,26 +118,19 @@ function getNextArea(): string | null {
 
     for (const line of lines) {
       const trimmed = line.trim();
-      // Skip empty lines and lines starting with "x " (already processed)
       if (trimmed && !trimmed.startsWith("x ")) {
         return trimmed;
       }
     }
-
     return null;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       console.error(`Error: ${ROUTES_FILE} not found`);
-    } else {
-      console.error(`Error reading routes.txt:`, error);
     }
     throw error;
   }
 }
 
-/**
- * Marks an area as done by prefixing it with "x " in routes.txt
- */
 function markAreaAsDone(areaName: string): void {
   try {
     const content = fs.readFileSync(ROUTES_FILE, "utf-8");
@@ -94,32 +141,24 @@ function markAreaAsDone(areaName: string): void {
       const trimmed = line.trim();
       if (trimmed === areaName && !trimmed.startsWith("x ")) {
         found = true;
-        // Preserve original indentation/formatting, just prefix with "x "
-        return line.replace(/^(\s*)(.+)$/, (match, indent, text) => {
-          return text.trim() === areaName ? `${indent}x ${text.trim()}` : match;
-        });
+        return `x ${trimmed}`;
       }
       return line;
     });
 
     if (!found) {
-      console.warn(
-        `⚠ Warning: Could not find "${areaName}" in routes.txt to mark as done`
-      );
+      console.warn(`⚠ Warning: Could not find "${areaName}" to mark as done`);
       return;
     }
 
     fs.writeFileSync(ROUTES_FILE, updatedLines.join("\n"), "utf-8");
-    console.log(`✓ Marked "${areaName}" as done in routes.txt`);
+    console.log(`✓ Marked "${areaName}" as done`);
   } catch (error) {
     console.error(`Error marking area as done:`, error);
     throw error;
   }
 }
 
-/**
- * Converts area name to kebab-case filename (lowercase, no spaces)
- */
 function areaNameToFilename(areaName: string): string {
   return areaName
     .toLowerCase()
@@ -127,30 +166,52 @@ function areaNameToFilename(areaName: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
-/**
- * Creates a research task using Exa Research API
- */
+function generateFrontmatter(areaName: string): string {
+  const today = new Date();
+  const dateStr = today.toISOString().split("T")[0];
+  const areaNameLower = areaName.toLowerCase();
+  const tags = ["area", areaNameLower, "trad", "sport", "bouldering"];
+
+  return `---
+title: "${areaName} Climbing Guide"
+description: "A curated route guide to ${areaName}."
+date: "${dateStr}"
+tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
+published: true
+---`;
+}
+
+function writeMDXFile(areaName: string, articleContent: string): void {
+  const filename = `${areaNameToFilename(areaName)}.mdx`;
+  const filepath = path.join(CONTENT_DIR, filename);
+  const frontmatter = generateFrontmatter(areaName);
+  const content = `${frontmatter}\n\n${articleContent}`;
+
+  fs.writeFileSync(filepath, content, "utf-8");
+  console.log(`✓ Created MDX file: ${filename}`);
+}
+
+// =============================================================================
+// EXA RESEARCH API
+// =============================================================================
+
 async function createResearchTask(areaName: string): Promise<string> {
-  const instructions = `Research the climbing area "${areaName}". Provide a comprehensive climbing guide including:
+  const instructions = `Research the climbing area "${areaName}" thoroughly. Find as many climbing routes as possible with their details.
 
-1. Brief area description and location
-2. Route listings organized by these categories:
-   - Beginner Routes (5.6-5.9): Include route name, grade, style (trad/sport/boulder), and Mountain Project link
-   - Intermediate Routes (5.10-5.11): Include route name, grade, style, and Mountain Project link
-   - Expert Routes (5.12+): Include route name, grade, style, and Mountain Project link
-   - Classic/Iconic Routes: Must-do routes regardless of grade, with name, grade, style, and Mountain Project link
-   - Epic/Long Routes: Multi-pitch or notably long routes, with name, grade, style, and Mountain Project link
-   - Best Boulders: If bouldering exists in the area, include problem name, grade (V-scale), and Mountain Project link
+For each route, provide:
+- Route name (exact name as listed on Mountain Project)
+- Grade (YDS for ropes, V-scale for boulders)
+- Style (Trad, Sport, or Boulder)
+- Wall/Crag name where the route is located
+- Direct Mountain Project URL (https://www.mountainproject.com/route/...)
 
-3. Format the output as markdown with:
-   - Area name as H1 heading
-   - Brief introduction paragraph (2-3 sentences)
-   - Category sections with H2 headings
-   - Route entries formatted as:
-     - **Route Name** (Grade, Style, Location/Area)
-     - [View on Mountain Project →](link)
+Cover all grade ranges from beginner (5.6) to expert (5.12+).
+Include multi-pitch/epic routes if they exist.
+Include boulder problems if bouldering exists in the area.
+Include classic/iconic routes that are considered must-dos.
 
-Ensure all Mountain Project links are included. Only include categories that are relevant to this area.`;
+Focus on quality routes that are well-regarded and frequently climbed.
+Provide Mountain Project links for every route mentioned.`;
 
   const response = await fetch(EXA_API_BASE, {
     method: "POST",
@@ -176,26 +237,18 @@ Ensure all Mountain Project links are included. Only include categories that are
   return task.researchId;
 }
 
-/**
- * Polls the research task until completion
- */
 async function pollResearchTask(researchId: string): Promise<ResearchResult> {
-  const maxAttempts = 120; // 10 minutes max (120 * 5 seconds)
-  const pollInterval = 5000; // 5 seconds
+  const maxAttempts = 120;
+  const pollInterval = 5000;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const response = await fetch(`${EXA_API_BASE}/${researchId}`, {
       method: "GET",
-      headers: {
-        "x-api-key": EXA_API_KEY!,
-      },
+      headers: { "x-api-key": EXA_API_KEY! },
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to get research task: ${response.status} ${errorText}`
-      );
+      throw new Error(`Failed to get research task: ${response.status}`);
     }
 
     const result: ResearchResult = await response.json();
@@ -204,282 +257,413 @@ async function pollResearchTask(researchId: string): Promise<ResearchResult> {
       console.log(`✓ Research completed after ${(attempt + 1) * 5} seconds`);
       return result;
     } else if (result.status === "failed" || result.status === "canceled") {
-      throw new Error(`Research task ${result.status}: ${researchId}`);
+      throw new Error(`Research task ${result.status}`);
     }
 
-    // Still running or pending, wait and poll again
-    if (attempt < maxAttempts - 1) {
-      process.stdout.write(
-        `\r⏳ Research in progress... (${attempt + 1}/${maxAttempts})`
-      );
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
-    }
+    process.stdout.write(
+      `\r⏳ Research in progress... (${attempt + 1}/${maxAttempts})`
+    );
+    await new Promise((resolve) => setTimeout(resolve, pollInterval));
   }
 
-  throw new Error(
-    `Research task timed out after ${
-      (maxAttempts * pollInterval) / 1000
-    } seconds`
-  );
+  throw new Error("Research task timed out");
 }
 
-/**
- * Gets the research results (markdown output)
- */
-async function getResearchResults(researchId: string): Promise<string> {
+async function getResearchContent(researchId: string): Promise<string> {
   const result = await pollResearchTask(researchId);
 
   if (!result.output) {
     throw new Error("Research completed but no output found");
   }
 
-  // Handle different output formats
-  let markdownContent: string;
-
   if (typeof result.output === "string") {
-    // If output is already a string, use it directly
-    markdownContent = result.output;
-  } else if (typeof result.output === "object" && result.output !== null) {
-    // If output is an object, try to extract markdown content
-    // Check common property names for markdown content
-    const outputObj = result.output as any;
-
-    if (outputObj.markdown && typeof outputObj.markdown === "string") {
-      markdownContent = outputObj.markdown;
-    } else if (outputObj.text && typeof outputObj.text === "string") {
-      markdownContent = outputObj.text;
-    } else if (outputObj.content && typeof outputObj.content === "string") {
-      markdownContent = outputObj.content;
-    } else if (outputObj.result) {
-      markdownContent =
-        typeof outputObj.result === "string"
-          ? outputObj.result
-          : JSON.stringify(outputObj.result, null, 2);
-    } else {
-      // Debug: log the structure to help understand what we're getting
-      console.log("Debug: Output object structure:", Object.keys(outputObj));
-      // If no known property, try to find the first string property
-      const stringProps = Object.entries(outputObj).find(
-        ([_, value]) => typeof value === "string"
-      );
-      if (stringProps) {
-        markdownContent = stringProps[1] as string;
-      } else {
-        // Last resort: stringify the object (shouldn't happen with Exa API)
-        markdownContent = JSON.stringify(outputObj, null, 2);
-        console.warn("⚠ Warning: Output is an object with unknown structure");
-      }
-    }
-  } else {
-    // Fallback: convert to string
-    markdownContent = String(result.output);
+    return result.output;
+  } else if (typeof result.output === "object") {
+    const obj = result.output as any;
+    return (
+      obj.markdown || obj.text || obj.content || JSON.stringify(obj, null, 2)
+    );
   }
-
-  return markdownContent;
+  return String(result.output);
 }
 
-/**
- * Generates MDX frontmatter from area name
- */
-function generateFrontmatter(areaName: string): string {
-  const today = new Date();
-  const dateStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
-  const areaNameLower = areaName.toLowerCase();
+// =============================================================================
+// PASS 1: ROUTE EXTRACTION
+// =============================================================================
 
-  // Generate tags - include area name and common climbing types
-  const tags = ["area", areaNameLower, "trad", "sport", "bouldering"];
-
-  return `---
-title: "${areaName} Climbing Guide"
-description: "A curated route guide to ${areaName}."
-date: "${dateStr}"
-tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]
-published: true
----`;
-}
-
-/**
- * Generates an article from research content using AI SDK
- */
-async function generateArticleFromResearch(
+async function extractRoutesFromResearch(
   areaName: string,
   researchContent: string
-): Promise<string> {
-  const prompt = `Using the following research about the climbing area "${areaName}", write a comprehensive climbing guide article in markdown format.
+): Promise<Route[]> {
+  console.log("\n🔍 Pass 1: Extracting routes from research...");
+
+  const prompt = `You are extracting climbing route information from research about "${areaName}".
 
 Research content:
 ${researchContent}
 
-Write a well-structured climbing guide article that includes:
+Extract ALL climbing routes mentioned in this research. For each route, provide:
+- name: The exact route name
+- grade: The climbing grade (e.g., "5.10a", "5.12c", "V4")
+- style: Either "Trad", "Sport", or "Boulder"
+- wall: The wall, crag, or area name where the route is located
+- mpLink: The Mountain Project URL (must be https://www.mountainproject.com/route/...)
 
-1. An H1 heading with the area name and "Climbing Guide"
-2. A brief introduction paragraph (2-3 sentences) describing the area's character, location, and what makes it special
-3. Route listings organized by categories:
-   - Beginner Routes (5.6-5.9): Include route name, grade, style (trad/sport/boulder), area/location, and Mountain Project link
-   - Intermediate Routes (5.10-5.11): Include route name, grade, style, area/location, and Mountain Project link
-   - Expert Routes (5.12+): Include route name, grade, style, area/location, and Mountain Project link
-   - Classic/Iconic Routes: Must-do routes regardless of grade, with name, grade, style, area/location, and Mountain Project link
-   - Epic/Long Routes: Multi-pitch or notably long routes, with name, grade, style, area/location, and Mountain Project link
-   - Best Boulders: If bouldering exists, include problem name, grade (V-scale), and Mountain Project link
+IMPORTANT:
+- Only include routes with valid Mountain Project URLs
+- Do not invent or guess URLs - only use URLs that appear in the research
+- If a route doesn't have a valid MP link, skip it
+- Include routes of all grades from beginner to expert
+- Include both roped climbs and boulders if present
 
-Format requirements:
-- Use H2 headings for each category (e.g., "## Beginner Routes (5.6–5.9)")
-- Add a brief introductory sentence or two for each category explaining what to expect
-- Format routes as:
-  - **Route Name** (Grade, Style, Area/Location)
-  - [View on Mountain Project →](link)
-- Use horizontal rules (---) to separate sections
-- Only include categories that are relevant to this area
-- Write in a casual, engaging tone that matches the style of climbing guides
-- Ensure all Mountain Project links are included and properly formatted
+Return a JSON array of route objects.`;
 
-Return ONLY the markdown content (no frontmatter, no explanations). Start directly with the H1 heading.`;
+  try {
+    const ExtractedRoutesSchema = z.object({
+      routes: z.array(RouteSchema),
+    });
 
-  console.log("🤖 Generating article with Claude Sonnet 4.5...");
+    const result = await generateObject({
+      model: anthropic("claude-sonnet-4-20250514"),
+      schema: ExtractedRoutesSchema,
+      prompt,
+    });
+
+    const extractedRoutes = result.object as z.infer<
+      typeof ExtractedRoutesSchema
+    >;
+    console.log(
+      `  ✓ Extracted ${extractedRoutes.routes.length} routes from research`
+    );
+    return extractedRoutes.routes;
+  } catch (error) {
+    console.error("  ✗ Failed to extract routes:", error);
+    return [];
+  }
+}
+
+// =============================================================================
+// LINK VALIDATION
+// =============================================================================
+
+async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
+  console.log("\n🔗 Validating Mountain Project links...");
+  console.log(`  Checking ${routes.length} routes...`);
+
+  const validatedRoutes: ValidatedRoute[] = [];
+  let validCount = 0;
+  let invalidCount = 0;
+
+  for (const route of routes) {
+    try {
+      const response = await fetch(route.mpLink, {
+        method: "HEAD",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; LinkValidator/1.0)",
+        },
+      });
+
+      const isValid = response.ok;
+      validatedRoutes.push({ ...route, isValid });
+
+      if (isValid) {
+        validCount++;
+      } else {
+        invalidCount++;
+      }
+    } catch {
+      validatedRoutes.push({ ...route, isValid: false });
+      invalidCount++;
+    }
+
+    // Rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  console.log(`  ✓ ${validCount} valid, ${invalidCount} invalid`);
+
+  // Return only valid routes
+  const validRoutes = validatedRoutes.filter((r) => r.isValid);
+  console.log(`  ✓ ${validRoutes.length} routes passed validation`);
+
+  return validRoutes;
+}
+
+// =============================================================================
+// PASS 2: CURATION & BUDGETING
+// =============================================================================
+
+async function curateAndBudgetRoutes(
+  areaName: string,
+  validatedRoutes: ValidatedRoute[]
+): Promise<CuratedRoutes> {
+  console.log("\n📊 Pass 2: Curating and budgeting routes...");
+
+  const routesJson = JSON.stringify(
+    validatedRoutes.map(({ isValid, ...r }) => r),
+    null,
+    2
+  );
+
+  const prompt = `You are curating climbing routes for "${areaName}" for the RockClimbUtah website.
+
+Available validated routes:
+${routesJson}
+
+TASK: Assign these routes to categories following these STRICT rules:
+
+CATEGORY BUDGETS (adjust based on what the area offers):
+- beginner (5.6-5.9): 6-10 routes
+- intermediate (5.10-5.11): 8-12 routes  
+- hard (5.12+): 6-10 routes
+- classic (must-do routes of any grade): 8-12 routes (MUST be highest or tied for highest)
+- epic (multi-pitch/long routes): 0-8 routes (only if area has them)
+- boulders (V-scale problems): 0-8 routes (only if area has bouldering)
+
+CRITICAL RULES:
+1. TOTAL routes: Target 30-45, maximum 50
+2. Each route appears in EXACTLY ONE category - NO DUPLICATES
+3. The "classic" category MUST have the most routes (or tie for most)
+4. Spread routes across different walls/crags - avoid clustering
+5. Include variety of styles (slab, steep, crack, face, etc.)
+6. Only include categories relevant to this area
+
+DECISION FRAMEWORK:
+- If a route is both classic AND beginner, put it in "classic"
+- If a route is both classic AND hard, put it in "classic"
+- Prioritize: classic > grade-based categories > discipline-specific
+
+Return routes organized by category. Empty categories should have empty arrays.`;
+
+  try {
+    const result = await generateObject({
+      model: anthropic("claude-sonnet-4-20250514"),
+      schema: CuratedRoutesSchema,
+      prompt,
+    });
+
+    const curated = result.object as CuratedRoutes;
+
+    // Log category counts
+    const counts = {
+      beginner: curated.beginner.length,
+      intermediate: curated.intermediate.length,
+      hard: curated.hard.length,
+      classic: curated.classic.length,
+      epic: curated.epic.length,
+      boulders: curated.boulders.length,
+    };
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+    console.log(`  ✓ Curated ${total} routes across categories:`);
+    console.log(`    Beginner: ${counts.beginner}`);
+    console.log(`    Intermediate: ${counts.intermediate}`);
+    console.log(`    Hard: ${counts.hard}`);
+    console.log(`    Classic: ${counts.classic}`);
+    console.log(`    Epic: ${counts.epic}`);
+    console.log(`    Boulders: ${counts.boulders}`);
+
+    return curated;
+  } catch (error) {
+    console.error("  ✗ Failed to curate routes:", error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// PASS 3: ARTICLE WRITING
+// =============================================================================
+
+async function writeArticle(
+  areaName: string,
+  curatedRoutes: CuratedRoutes
+): Promise<string> {
+  console.log("\n✍️ Pass 3: Writing article...");
+
+  const routesJson = JSON.stringify(curatedRoutes, null, 2);
+
+  const prompt = `You are writing a climbing guide for "${areaName}" for the RockClimbUtah website.
+
+Curated routes by category:
+${routesJson}
+
+Write the article following this EXACT structure and voice:
+
+STRUCTURE:
+1. H1: "${areaName} Climbing Guide"
+2. Area intro (2-3 sentences): What kind of climbing, why people go there, any critical access notes. Climber-to-climber tone.
+3. Route categories (only include categories that have routes):
+   - Each starts with H2 heading (e.g., "## Beginner Routes (5.6–5.9)")
+   - A short intro paragraph for each category (what kind of session it supports)
+   - "### Routes" subheading
+   - Bulleted list of routes
+
+ROUTE FORMAT (EXACT - no variations):
+- **Route Name** (Grade, Style, Wall/Crag)
+  [View on Mountain Project →](link)
+
+VOICE & TONE:
+- Sounds like a climber talking to another climber
+- Confident, practical, lightly "send it" but still responsible
+- Beginner-to-intermediate perspective
+- Clear > clever, useful > impressive
+- NO per-route descriptions, NO beta, NO disclaimers
+
+FORMATTING:
+- Use "---" horizontal rules between major sections
+- H2 for category names
+- H3 for "### Routes" subheadings
+- Bullet points for routes
+- Two spaces after route name line, then MP link on next line
+
+DO NOT:
+- Include frontmatter
+- Add route descriptions or beta
+- Copy Mountain Project descriptions
+- Include routes not in the provided data
+
+Return ONLY the markdown content starting with the H1 heading.`;
 
   const { text } = await generateText({
     model: anthropic("claude-sonnet-4-20250514"),
     prompt,
-    maxTokens: 4000,
+    maxTokens: 6000,
   });
 
+  console.log("  ✓ Article draft complete");
   return text;
 }
 
-/**
- * Validates Mountain Project links and replaces invalid ones with search links
- */
-async function validateMountainProjectLinks(
-  content: string,
-  areaName: string
+// =============================================================================
+// PASS 4: REVIEW & FIX
+// =============================================================================
+
+async function reviewAndFixArticle(
+  areaName: string,
+  article: string,
+  curatedRoutes: CuratedRoutes
 ): Promise<string> {
-  console.log("🔗 Validating Mountain Project links...");
+  console.log("\n🔍 Pass 4: Reviewing article against spec...");
 
-  // Match Mountain Project route links
-  const linkRegex =
-    /\[View on Mountain Project →\]\((https:\/\/www\.mountainproject\.com\/route\/[^\)]+)\)/g;
-  const matches = [...content.matchAll(linkRegex)];
+  const routesJson = JSON.stringify(curatedRoutes, null, 2);
 
-  if (matches.length === 0) {
-    console.log("  No Mountain Project links found to validate");
-    return content;
-  }
+  const prompt = `You are reviewing a climbing guide article for "${areaName}" against the RockClimbUtah Content Creation Spec.
 
-  console.log(`  Found ${matches.length} links to validate...`);
+ARTICLE TO REVIEW:
+${article}
 
-  let validatedContent = content;
-  let validCount = 0;
-  let invalidCount = 0;
+CURATED ROUTES DATA:
+${routesJson}
 
-  // Process links in batches to avoid rate limiting
-  for (const match of matches) {
-    const fullMatch = match[0];
-    const url = match[1];
+CHECK FOR THESE VIOLATIONS AND FIX THEM:
 
-    try {
-      const response = await fetch(url, {
-        method: "HEAD",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; LinkValidator/1.0; +https://example.com)",
-        },
-      });
+1. ROUTE COUNT: Total should be 30-50. If over 50, remove the least essential routes.
 
-      if (response.ok) {
-        validCount++;
-      } else {
-        // Extract route name from the link text context if possible
-        const searchUrl = `https://www.mountainproject.com/search?q=${encodeURIComponent(
-          areaName
-        )}`;
-        validatedContent = validatedContent.replace(
-          fullMatch,
-          `[Search on Mountain Project →](${searchUrl})`
-        );
-        invalidCount++;
-      }
-    } catch (error) {
-      // Network error, replace with search link
-      const searchUrl = `https://www.mountainproject.com/search?q=${encodeURIComponent(
-        areaName
-      )}`;
-      validatedContent = validatedContent.replace(
-        fullMatch,
-        `[Search on Mountain Project →](${searchUrl})`
-      );
-      invalidCount++;
-    }
+2. CLASSIC RULE: The "Classic" category must have the most routes (or tie for most). If not, move routes to classic or remove from other categories.
 
-    // Small delay to avoid rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
+3. NO DUPLICATES: Each route should appear exactly once. Remove any duplicates.
 
-  console.log(
-    `  ✓ ${validCount} valid, ${invalidCount} replaced with search links`
-  );
+4. FORMAT CHECK: Each route must follow EXACTLY:
+   - **Route Name** (Grade, Style, Wall/Crag)
+     [View on Mountain Project →](link)
+   
+   Fix any that have descriptions, beta, or wrong format.
 
-  return validatedContent;
+5. NO BETA/DESCRIPTIONS: Remove any per-route descriptions or beta.
+
+6. TONE CHECK: Should sound like a climber talking to another climber. Fix any overly formal or marketing-speak language.
+
+7. STRUCTURE CHECK:
+   - H1 with area name
+   - Area intro (2-3 sentences)
+   - Categories with H2 headings
+   - "### Routes" subheading in each category
+   - Horizontal rules between sections
+
+8. LINK FORMAT: All links should be "[View on Mountain Project →](url)"
+
+If the article passes all checks, return it unchanged.
+If violations are found, fix them and return the corrected article.
+
+Return ONLY the final article markdown (no explanations, no frontmatter).`;
+
+  const { text } = await generateText({
+    model: anthropic("claude-sonnet-4-20250514"),
+    prompt,
+    maxTokens: 6000,
+  });
+
+  console.log("  ✓ Review complete");
+  return text;
 }
 
-/**
- * Writes the MDX file to the content directory
- */
-function writeMDXFile(areaName: string, articleContent: string): void {
-  const filename = `${areaNameToFilename(areaName)}.mdx`;
-  const filepath = path.join(CONTENT_DIR, filename);
+// =============================================================================
+// MAIN EXECUTION
+// =============================================================================
 
-  const frontmatter = generateFrontmatter(areaName);
-  const content = `${frontmatter}\n\n${articleContent}`;
-
-  fs.writeFileSync(filepath, content, "utf-8");
-  console.log(`✓ Created MDX file: ${filename}`);
-}
-
-/**
- * Main script execution
- */
 async function main() {
   try {
-    console.log("🔍 Looking for next area to process...\n");
+    console.log("🧗 RockClimbUtah Content Generator\n");
+    console.log("=".repeat(50));
 
-    // Step 1: Get next unprocessed area
+    // Step 1: Get next area
     const areaName = getNextArea();
     if (!areaName) {
       console.log("✓ No unprocessed areas found in routes.txt");
       return;
     }
+    console.log(`📍 Processing: ${areaName}\n`);
 
-    console.log(`📍 Processing area: ${areaName}\n`);
-
-    // Step 2: Create research task
-    console.log("📡 Creating research task with Exa API...");
+    // Step 2: Exa Research
+    console.log("📡 Starting Exa research...");
     const researchId = await createResearchTask(areaName);
+    const researchContent = await getResearchContent(researchId);
+    console.log("");
 
-    // Step 3: Poll for completion and get results
-    console.log("⏳ Waiting for research to complete...");
-    const researchContent = await getResearchResults(researchId);
-    console.log(""); // New line after polling progress
-
-    // Step 4: Generate article using AI SDK
-    const articleContent = await generateArticleFromResearch(
+    // Step 3: Pass 1 - Extract routes
+    const extractedRoutes = await extractRoutesFromResearch(
       areaName,
       researchContent
     );
 
-    // Step 5: Validate Mountain Project links
-    const validatedContent = await validateMountainProjectLinks(
-      articleContent,
-      areaName
+    if (extractedRoutes.length === 0) {
+      throw new Error("No routes extracted from research");
+    }
+
+    // Step 4: Validate links
+    const validatedRoutes = await validateRouteLinks(extractedRoutes);
+
+    if (validatedRoutes.length < 10) {
+      console.warn(
+        `⚠ Warning: Only ${validatedRoutes.length} valid routes found`
+      );
+    }
+
+    // Step 5: Pass 2 - Curate and budget
+    const curatedRoutes = await curateAndBudgetRoutes(
+      areaName,
+      validatedRoutes
     );
 
-    // Step 6: Write MDX file
-    console.log("📝 Writing MDX file...");
-    writeMDXFile(areaName, validatedContent);
+    // Step 6: Pass 3 - Write article
+    const articleDraft = await writeArticle(areaName, curatedRoutes);
 
-    // Step 7: Mark area as done
+    // Step 7: Pass 4 - Review and fix
+    const finalArticle = await reviewAndFixArticle(
+      areaName,
+      articleDraft,
+      curatedRoutes
+    );
+
+    // Step 8: Write MDX file
+    console.log("\n📝 Writing MDX file...");
+    writeMDXFile(areaName, finalArticle);
+
+    // Step 9: Mark as done
     markAreaAsDone(areaName);
 
-    console.log(`\n✅ Successfully processed "${areaName}"!`);
+    console.log("\n" + "=".repeat(50));
+    console.log(`✅ Successfully processed "${areaName}"!`);
   } catch (error) {
     console.error(
       "\n❌ Error:",
@@ -489,5 +673,4 @@ async function main() {
   }
 }
 
-// Run the script
 main();
