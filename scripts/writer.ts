@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { config } from "dotenv";
-import { generateText, generateObject } from "ai";
+import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
@@ -196,22 +196,28 @@ function writeMDXFile(areaName: string, articleContent: string): void {
 // =============================================================================
 
 async function createResearchTask(areaName: string): Promise<string> {
-  const instructions = `Research the climbing area "${areaName}" thoroughly. Find as many climbing routes as possible with their details.
+  const instructions = `Research the climbing area "${areaName}" thoroughly. I need at least 50-60 climbing routes with their complete details.
 
-For each route, provide:
+CRITICAL: Find as many routes as possible. I need at least 50 routes with Mountain Project links.
+
+For each route, you MUST provide:
 - Route name (exact name as listed on Mountain Project)
-- Grade (YDS for ropes, V-scale for boulders)
+- Grade (YDS for ropes like 5.8, 5.10a, 5.12b; V-scale for boulders like V0, V4, V8)
 - Style (Trad, Sport, or Boulder)
 - Wall/Crag name where the route is located
 - Direct Mountain Project URL (https://www.mountainproject.com/route/...)
 
-Cover all grade ranges from beginner (5.6) to expert (5.12+).
-Include multi-pitch/epic routes if they exist.
-Include boulder problems if bouldering exists in the area.
-Include classic/iconic routes that are considered must-dos.
+Coverage requirements - find routes in ALL of these categories:
+- Beginner routes (5.6-5.9 or V0-V2): at least 10 routes
+- Intermediate routes (5.10-5.11 or V3-V6): at least 15 routes
+- Hard routes (5.12+ or V7+): at least 10 routes
+- Classic/iconic routes of any grade: at least 10 routes
+- Multi-pitch/epic routes if they exist
+- Boulder problems if bouldering exists in the area
 
-Focus on quality routes that are well-regarded and frequently climbed.
-Provide Mountain Project links for every route mentioned.`;
+Search Mountain Project, guidebooks, and climbing forums for route information.
+Every route MUST have a valid Mountain Project URL.
+Be comprehensive - I need 50+ routes total.`;
 
   const response = await fetch(EXA_API_BASE, {
     method: "POST",
@@ -302,7 +308,9 @@ async function extractRoutesFromResearch(
 Research content:
 ${researchContent}
 
-Extract ALL climbing routes mentioned in this research. For each route, provide:
+Extract ALL climbing routes mentioned in this research. Be thorough and extract as many routes as possible - aim for at least 50-60 routes if available.
+
+For each route, provide:
 - name: The exact route name
 - grade: The climbing grade (e.g., "5.10a", "5.12c", "V4")
 - style: Either "Trad", "Sport", or "Boulder"
@@ -310,34 +318,61 @@ Extract ALL climbing routes mentioned in this research. For each route, provide:
 - mpLink: The Mountain Project URL (must be https://www.mountainproject.com/route/...)
 
 IMPORTANT:
-- Only include routes with valid Mountain Project URLs
+- Extract EVERY route mentioned in the research, even if it seems less important
+- Only include routes with valid Mountain Project URLs that appear in the research
 - Do not invent or guess URLs - only use URLs that appear in the research
 - If a route doesn't have a valid MP link, skip it
-- Include routes of all grades from beginner to expert
+- Include routes of ALL grades from beginner to expert
 - Include both roped climbs and boulders if present
+- Be comprehensive - extract routes from all sections, all categories, all mentions
 
-Return a JSON array of route objects.`;
+Return a JSON object with this exact structure:
+{
+  "routes": [
+    {
+      "name": "Route Name",
+      "grade": "5.10a",
+      "style": "Sport",
+      "wall": "Wall Name",
+      "mpLink": "https://www.mountainproject.com/route/..."
+    }
+  ]
+}
+
+Return ONLY valid JSON, no markdown, no explanations.`;
 
   try {
+    const { text } = await generateText({
+      model: anthropic("claude-sonnet-4-20250514"),
+      prompt,
+      maxTokens: 4000,
+    });
+
+    // Parse JSON from response (may have markdown code blocks)
+    let jsonText = text.trim();
+    if (jsonText.startsWith("```")) {
+      // Extract JSON from markdown code block
+      const match = jsonText.match(/```(?:json)?\n([\s\S]*?)\n```/);
+      if (match) {
+        jsonText = match[1];
+      }
+    }
+
+    const parsed = JSON.parse(jsonText);
     const ExtractedRoutesSchema = z.object({
       routes: z.array(RouteSchema),
     });
 
-    const result = await generateObject({
-      model: anthropic("claude-sonnet-4-20250514"),
-      schema: ExtractedRoutesSchema,
-      prompt,
-    });
-
-    const extractedRoutes = result.object as z.infer<
-      typeof ExtractedRoutesSchema
-    >;
+    const validated = ExtractedRoutesSchema.parse(parsed);
     console.log(
-      `  ✓ Extracted ${extractedRoutes.routes.length} routes from research`
+      `  ✓ Extracted ${validated.routes.length} routes from research`
     );
-    return extractedRoutes.routes;
+    return validated.routes;
   } catch (error) {
     console.error("  ✗ Failed to extract routes:", error);
+    if (error instanceof Error) {
+      console.error(`    Error details: ${error.message}`);
+    }
     return [];
   }
 }
@@ -412,37 +447,76 @@ ${routesJson}
 
 TASK: Assign these routes to categories following these STRICT rules:
 
-CATEGORY BUDGETS (adjust based on what the area offers):
-- beginner (5.6-5.9): 6-10 routes
-- intermediate (5.10-5.11): 8-12 routes  
-- hard (5.12+): 6-10 routes
-- classic (must-do routes of any grade): 8-12 routes (MUST be highest or tied for highest)
-- epic (multi-pitch/long routes): 0-8 routes (only if area has them)
-- boulders (V-scale problems): 0-8 routes (only if area has bouldering)
+DETERMINE AREA TYPE FIRST:
+- If most routes are V-scale (bouldering), use boulder categories
+- If most routes are YDS (5.x), use roped climbing categories
+- Mixed areas should use both as appropriate
 
-CRITICAL RULES:
-1. TOTAL routes: Target 30-45, maximum 50
+CATEGORY BUDGETS - ROPED CLIMBING (if area has YDS grades):
+- beginner (5.6-5.9): MINIMUM 6 routes, target 8-10 routes
+- intermediate (5.10-5.11): MINIMUM 8 routes, target 10-12 routes  
+- hard (5.12+): MINIMUM 6 routes, target 8-10 routes
+- classic (must-do routes of any grade): MINIMUM 8 routes, target 10-12 routes (MUST be highest or tied for highest)
+- epic (multi-pitch/long routes): 0-8 routes (only if area has them)
+
+CATEGORY BUDGETS - BOULDERING (if area has V-scale grades):
+- beginner (V0-V2): MINIMUM 6 routes, target 8-10 routes
+- intermediate (V3-V6): MINIMUM 8 routes, target 10-12 routes
+- hard (V7+): MINIMUM 6 routes, target 8-10 routes
+- classic (must-do problems of any grade): MINIMUM 8 routes, target 10-12 routes (MUST be highest or tied for highest)
+- boulders: Use this category name instead of "beginner/intermediate/hard" if the area is primarily bouldering
+
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. TOTAL routes: MUST be between 30-45 routes (target 35-40). If you have fewer than 30 routes, you MUST include more routes from the available list to reach at least 30.
 2. Each route appears in EXACTLY ONE category - NO DUPLICATES
-3. The "classic" category MUST have the most routes (or tie for most)
-4. Spread routes across different walls/crags - avoid clustering
-5. Include variety of styles (slab, steep, crack, face, etc.)
-6. Only include categories relevant to this area
+3. The "classic" category MUST have the most routes (or tie for most) - minimum 8 routes
+4. Fill budgets aggressively - aim for the HIGH end of each range
+5. Spread routes across different walls/crags - avoid clustering
+6. Include variety of styles (slab, steep, crack, face, etc.)
+7. Only include categories relevant to this area
 
 DECISION FRAMEWORK:
 - If a route is both classic AND beginner, put it in "classic"
 - If a route is both classic AND hard, put it in "classic"
 - Prioritize: classic > grade-based categories > discipline-specific
+- If you have fewer than 30 routes total, you MUST select more routes from the available list, even if they're slightly less ideal
 
-Return routes organized by category. Empty categories should have empty arrays.`;
+IMPORTANT: You have ${validatedRoutes.length} validated routes available. You MUST select at least 30 routes total, ideally 35-40. Do not be conservative - fill the budgets! If you have ${validatedRoutes.length} or more routes available, use them!
+
+Return routes organized by category. Empty categories should have empty arrays.
+
+Return a JSON object with this exact structure:
+{
+  "beginner": [...],
+  "intermediate": [...],
+  "hard": [...],
+  "classic": [...],
+  "epic": [...],
+  "boulders": [...]
+}
+
+Each route object should have: name, grade, style, wall, mpLink.
+Return ONLY valid JSON, no markdown, no explanations.`;
 
   try {
-    const result = await generateObject({
+    const { text } = await generateText({
       model: anthropic("claude-sonnet-4-20250514"),
-      schema: CuratedRoutesSchema,
       prompt,
+      maxTokens: 4000,
     });
 
-    const curated = result.object as CuratedRoutes;
+    // Parse JSON from response (may have markdown code blocks)
+    let jsonText = text.trim();
+    if (jsonText.startsWith("```")) {
+      // Extract JSON from markdown code block
+      const match = jsonText.match(/```(?:json)?\n([\s\S]*?)\n```/);
+      if (match) {
+        jsonText = match[1];
+      }
+    }
+
+    const parsed = JSON.parse(jsonText);
+    const curated = CuratedRoutesSchema.parse(parsed);
 
     // Log category counts
     const counts = {
@@ -462,6 +536,114 @@ Return routes organized by category. Empty categories should have empty arrays.`
     console.log(`    Classic: ${counts.classic}`);
     console.log(`    Epic: ${counts.epic}`);
     console.log(`    Boulders: ${counts.boulders}`);
+
+    // Validate route count
+    if (total < 30 && validatedRoutes.length >= 30) {
+      // Only retry if we have enough routes available but didn't select enough
+      console.warn(
+        `  ⚠ Warning: Only ${total} routes selected, but target is 30-45.`
+      );
+      console.warn(
+        `    Available routes: ${validatedRoutes.length}. Retrying with stricter enforcement...`
+      );
+
+      try {
+        // Retry with more aggressive prompt
+        const retryPrompt = `You are curating climbing routes for "${areaName}" for the RockClimbUtah website.
+
+Available validated routes (${validatedRoutes.length} total):
+${routesJson}
+
+CRITICAL: You MUST select at least 30 routes, ideally 35-40 routes. You previously selected only ${total} routes, which is insufficient.
+
+TASK: Assign routes to categories with these MINIMUM counts:
+- beginner: MINIMUM 6 routes (target 8-10)
+- intermediate: MINIMUM 8 routes (target 10-12)
+- hard: MINIMUM 6 routes (target 8-10)
+- classic: MINIMUM 8 routes (target 10-12) - MUST be highest or tied
+- epic: 0-8 routes (if applicable)
+- boulders: 0-8 routes (if applicable)
+
+You MUST select at least 30 routes total. Be more aggressive in selecting routes - include routes even if they're slightly less ideal. Fill the budgets!
+
+Return a JSON object with this exact structure (NO explanations, NO text, ONLY JSON):
+{
+  "beginner": [...],
+  "intermediate": [...],
+  "hard": [...],
+  "classic": [...],
+  "epic": [...],
+  "boulders": [...]
+}
+
+Each route object must have: name, grade, style, wall, mpLink.
+Return ONLY valid JSON, nothing else.`;
+
+        const retryResult = await generateText({
+          model: anthropic("claude-sonnet-4-20250514"),
+          prompt: retryPrompt,
+          maxTokens: 4000,
+        });
+
+        let retryJsonText = retryResult.text.trim();
+        if (retryJsonText.startsWith("```")) {
+          const match = retryJsonText.match(/```(?:json)?\n([\s\S]*?)\n```/);
+          if (match) {
+            retryJsonText = match[1];
+          }
+        }
+
+        const retryParsed = JSON.parse(retryJsonText);
+        const retryCurated = CuratedRoutesSchema.parse(retryParsed);
+
+        const retryCounts = {
+          beginner: retryCurated.beginner.length,
+          intermediate: retryCurated.intermediate.length,
+          hard: retryCurated.hard.length,
+          classic: retryCurated.classic.length,
+          epic: retryCurated.epic.length,
+          boulders: retryCurated.boulders.length,
+        };
+        const retryTotal = Object.values(retryCounts).reduce(
+          (a, b) => a + b,
+          0
+        );
+
+        console.log(`  ✓ Retry curated ${retryTotal} routes:`);
+        console.log(`    Beginner: ${retryCounts.beginner}`);
+        console.log(`    Intermediate: ${retryCounts.intermediate}`);
+        console.log(`    Hard: ${retryCounts.hard}`);
+        console.log(`    Classic: ${retryCounts.classic}`);
+        console.log(`    Epic: ${retryCounts.epic}`);
+        console.log(`    Boulders: ${retryCounts.boulders}`);
+
+        if (retryTotal >= 30) {
+          return retryCurated;
+        } else {
+          console.warn(
+            `  ⚠ Retry still only produced ${retryTotal} routes. Proceeding with original selection.`
+          );
+        }
+      } catch (retryError) {
+        console.warn(
+          `  ⚠ Retry failed: ${
+            retryError instanceof Error ? retryError.message : retryError
+          }`
+        );
+        console.warn(`    Proceeding with original ${total} routes.`);
+      }
+    } else if (total < 30) {
+      // Not enough routes available from research
+      console.warn(
+        `  ⚠ Warning: Only ${total} routes available (${validatedRoutes.length} validated).`
+      );
+      console.warn(
+        `    This is fewer than the 30-45 target, but proceeding with available routes.`
+      );
+      console.warn(
+        `    The Exa research did not return enough routes for this area.`
+      );
+    }
 
     return curated;
   } catch (error) {
@@ -557,9 +739,12 @@ ${routesJson}
 
 CHECK FOR THESE VIOLATIONS AND FIX THEM:
 
-1. ROUTE COUNT: Total should be 30-50. If over 50, remove the least essential routes.
+1. ROUTE COUNT: Total MUST be between 30-45 routes (target 35-40). 
+   - If under 30: This is CRITICAL - you MUST add more routes from the curatedRoutes data to reach at least 30 routes
+   - If over 50: Remove the least essential routes to get under 50
+   - Count all routes in all categories and ensure the total is 30-45
 
-2. CLASSIC RULE: The "Classic" category must have the most routes (or tie for most). If not, move routes to classic or remove from other categories.
+2. CLASSIC RULE: The "Classic" category must have the most routes (or tie for most), with minimum 8 routes. If not, move routes to classic or add more classic routes.
 
 3. NO DUPLICATES: Each route should appear exactly once. Remove any duplicates.
 
@@ -598,29 +783,20 @@ Return ONLY the final article markdown (no explanations, no frontmatter).`;
 }
 
 // =============================================================================
-// MAIN EXECUTION
+// PROCESS SINGLE AREA
 // =============================================================================
 
-async function main() {
+async function processArea(areaName: string): Promise<boolean> {
   try {
-    console.log("🧗 RockClimbUtah Content Generator\n");
-    console.log("=".repeat(50));
-
-    // Step 1: Get next area
-    const areaName = getNextArea();
-    if (!areaName) {
-      console.log("✓ No unprocessed areas found in routes.txt");
-      return;
-    }
     console.log(`📍 Processing: ${areaName}\n`);
 
-    // Step 2: Exa Research
+    // Step 1: Exa Research
     console.log("📡 Starting Exa research...");
     const researchId = await createResearchTask(areaName);
     const researchContent = await getResearchContent(researchId);
     console.log("");
 
-    // Step 3: Pass 1 - Extract routes
+    // Step 2: Pass 1 - Extract routes
     const extractedRoutes = await extractRoutesFromResearch(
       areaName,
       researchContent
@@ -630,7 +806,7 @@ async function main() {
       throw new Error("No routes extracted from research");
     }
 
-    // Step 4: Validate links
+    // Step 3: Validate links
     const validatedRoutes = await validateRouteLinks(extractedRoutes);
 
     if (validatedRoutes.length < 10) {
@@ -639,37 +815,105 @@ async function main() {
       );
     }
 
-    // Step 5: Pass 2 - Curate and budget
+    // Step 4: Pass 2 - Curate and budget
     const curatedRoutes = await curateAndBudgetRoutes(
       areaName,
       validatedRoutes
     );
 
-    // Step 6: Pass 3 - Write article
+    // Step 5: Pass 3 - Write article
     const articleDraft = await writeArticle(areaName, curatedRoutes);
 
-    // Step 7: Pass 4 - Review and fix
+    // Step 6: Pass 4 - Review and fix
     const finalArticle = await reviewAndFixArticle(
       areaName,
       articleDraft,
       curatedRoutes
     );
 
-    // Step 8: Write MDX file
+    // Step 7: Write MDX file
     console.log("\n📝 Writing MDX file...");
     writeMDXFile(areaName, finalArticle);
 
-    // Step 9: Mark as done
+    // Step 8: Mark as done
     markAreaAsDone(areaName);
 
-    console.log("\n" + "=".repeat(50));
     console.log(`✅ Successfully processed "${areaName}"!`);
+    return true;
   } catch (error) {
     console.error(
-      "\n❌ Error:",
+      `\n❌ Error processing "${areaName}":`,
       error instanceof Error ? error.message : error
     );
-    process.exit(1);
+    // Mark as done anyway to avoid infinite loop on problematic areas
+    // Prefix with "x FAILED: " so it's clear it failed
+    try {
+      const content = fs.readFileSync(ROUTES_FILE, "utf-8");
+      const lines = content.split("\n");
+      const updatedLines = lines.map((line) => {
+        const trimmed = line.trim();
+        if (trimmed === areaName && !trimmed.startsWith("x ")) {
+          return `x FAILED: ${trimmed}`;
+        }
+        return line;
+      });
+      fs.writeFileSync(ROUTES_FILE, updatedLines.join("\n"), "utf-8");
+      console.log(`  Marked "${areaName}" as FAILED in routes.txt`);
+    } catch {
+      // Ignore errors marking as failed
+    }
+    return false;
+  }
+}
+
+// =============================================================================
+// MAIN EXECUTION
+// =============================================================================
+
+async function main() {
+  console.log("🧗 RockClimbUtah Content Generator\n");
+  console.log("=".repeat(50));
+  console.log("Processing all unprocessed areas in routes.txt...\n");
+
+  let processed = 0;
+  let failed = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    // Get next unprocessed area
+    const areaName = getNextArea();
+
+    if (!areaName) {
+      console.log("\n" + "=".repeat(50));
+      if (processed === 0 && failed === 0) {
+        console.log("✓ No unprocessed areas found in routes.txt");
+      } else {
+        console.log("🏁 All areas processed!");
+        console.log(`   ✅ Success: ${processed}`);
+        if (failed > 0) {
+          console.log(`   ❌ Failed: ${failed}`);
+        }
+      }
+      break;
+    }
+
+    console.log("\n" + "=".repeat(50));
+    console.log(`[${processed + failed + 1}] Starting next area...\n`);
+
+    const success = await processArea(areaName);
+
+    if (success) {
+      processed++;
+    } else {
+      failed++;
+    }
+
+    // Small delay between areas to be respectful of API rate limits
+    const nextArea = getNextArea();
+    if (nextArea) {
+      console.log("\n⏳ Waiting 5 seconds before next area...\n");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
 }
 
