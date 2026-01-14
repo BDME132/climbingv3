@@ -396,7 +396,7 @@ Return ONLY valid JSON, no markdown, no explanations.`;
 
 async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
   console.log("\n🔗 Validating Mountain Project links...");
-  console.log(`  Checking ${routes.length} routes (content-based validation)...`);
+  console.log(`  Checking ${routes.length} routes...`);
 
   const validatedRoutes: ValidatedRoute[] = [];
   let validCount = 0;
@@ -404,42 +404,29 @@ async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
 
   for (const route of routes) {
     try {
-      // Use GET request and check page content for validity
-      const response = await fetch(route.mpLink, {
-        method: "GET",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        },
-      });
-
-      if (!response.ok) {
+      // Extract route ID and validate URL format
+      const idMatch = route.mpLink.match(/\/route\/(\d+)\//);
+      if (!idMatch) {
         validatedRoutes.push({ ...route, isValid: false });
         invalidCount++;
+        process.stdout.write("x");
         continue;
       }
 
-      const html = await response.text();
+      // HEAD request is faster and sufficient for status check
+      const response = await fetch(route.mpLink, {
+        method: "HEAD",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        },
+      });
 
-      // Check for indicators that the route doesn't exist
-      // Mountain Project shows these messages for invalid routes
-      const isInvalid =
-        html.includes("Route not found") ||
-        html.includes("Page Not Found") ||
-        html.includes("This page doesn't exist") ||
-        html.includes("404") ||
-        html.includes("We couldn't find") ||
-        !html.includes("mountainproject.com");
+      // Valid routes return 200 or 301/302 redirect
+      // Invalid routes return 404
+      const isValid =
+        response.ok || response.status === 301 || response.status === 302;
 
-      // Also check for positive indicators that it IS a valid route page
-      const hasRouteContent =
-        html.includes("route-type") ||
-        html.includes("route-stats") ||
-        html.includes("YDS") ||
-        html.includes("fa-star") ||
-        html.includes("Rating:");
-
-      const isValid = !isInvalid && hasRouteContent;
       validatedRoutes.push({ ...route, isValid });
 
       if (isValid) {
@@ -455,14 +442,12 @@ async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
       process.stdout.write("x");
     }
 
-    // Slightly longer delay for GET requests
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
 
-  console.log(""); // New line after dots
+  console.log("");
   console.log(`  ✓ ${validCount} valid, ${invalidCount} invalid`);
 
-  // Return only valid routes
   const validRoutes = validatedRoutes.filter((r) => r.isValid);
   console.log(`  ✓ ${validRoutes.length} routes passed validation`);
 
