@@ -196,28 +196,41 @@ function writeMDXFile(areaName: string, articleContent: string): void {
 // =============================================================================
 
 async function createResearchTask(areaName: string): Promise<string> {
-  const instructions = `Research the climbing area "${areaName}" thoroughly. I need at least 50-60 climbing routes with their complete details.
+  // Add Utah context if not present
+  const searchName = areaName.toLowerCase().includes("utah")
+    ? areaName
+    : `${areaName}, Utah`;
 
-CRITICAL: Find as many routes as possible. I need at least 50 routes with Mountain Project links.
+  const instructions = `Research the climbing area "${searchName}" in Utah, USA. I need at least 50-60 climbing routes with their complete details from Mountain Project.
 
-For each route, you MUST provide:
-- Route name (exact name as listed on Mountain Project)
-- Grade (YDS for ropes like 5.8, 5.10a, 5.12b; V-scale for boulders like V0, V4, V8)
+CRITICAL INSTRUCTIONS:
+1. Search specifically on mountainproject.com for "${searchName}"
+2. Only include routes that have REAL, VERIFIED Mountain Project URLs
+3. Do NOT make up or guess URLs - only use URLs you find on Mountain Project
+4. Every URL must follow the format: https://www.mountainproject.com/route/[number]/[route-name]
+
+For each route, provide:
+- Route name (EXACT name as listed on Mountain Project - do not paraphrase)
+- Grade (YDS for ropes: 5.8, 5.10a, 5.12b; V-scale for boulders: V0, V4, V8)
 - Style (Trad, Sport, or Boulder)
 - Wall/Crag name where the route is located
-- Direct Mountain Project URL (https://www.mountainproject.com/route/...)
+- Direct Mountain Project URL (copy the exact URL from the route page)
 
-Coverage requirements - find routes in ALL of these categories:
+Coverage requirements - find routes in ALL categories:
 - Beginner routes (5.6-5.9 or V0-V2): at least 10 routes
-- Intermediate routes (5.10-5.11 or V3-V6): at least 15 routes
+- Intermediate routes (5.10-5.11 or V3-V6): at least 15 routes  
 - Hard routes (5.12+ or V7+): at least 10 routes
 - Classic/iconic routes of any grade: at least 10 routes
 - Multi-pitch/epic routes if they exist
 - Boulder problems if bouldering exists in the area
 
-Search Mountain Project, guidebooks, and climbing forums for route information.
-Every route MUST have a valid Mountain Project URL.
-Be comprehensive - I need 50+ routes total.`;
+IMPORTANT: This is a Utah climbing area. Search for:
+- "mountainproject.com ${searchName}"
+- Browse the Utah > [specific area] section on Mountain Project
+- Look for popular/classic routes with high star ratings
+
+Only include routes with URLs you have actually verified exist on Mountain Project.
+I need 50+ routes total with real, working Mountain Project links.`;
 
   const response = await fetch(EXA_API_BASE, {
     method: "POST",
@@ -383,7 +396,7 @@ Return ONLY valid JSON, no markdown, no explanations.`;
 
 async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
   console.log("\n🔗 Validating Mountain Project links...");
-  console.log(`  Checking ${routes.length} routes...`);
+  console.log(`  Checking ${routes.length} routes (content-based validation)...`);
 
   const validatedRoutes: ValidatedRoute[] = [];
   let validCount = 0;
@@ -391,30 +404,62 @@ async function validateRouteLinks(routes: Route[]): Promise<ValidatedRoute[]> {
 
   for (const route of routes) {
     try {
+      // Use GET request and check page content for validity
       const response = await fetch(route.mpLink, {
-        method: "HEAD",
+        method: "GET",
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; LinkValidator/1.0)",
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         },
       });
 
-      const isValid = response.ok;
+      if (!response.ok) {
+        validatedRoutes.push({ ...route, isValid: false });
+        invalidCount++;
+        continue;
+      }
+
+      const html = await response.text();
+
+      // Check for indicators that the route doesn't exist
+      // Mountain Project shows these messages for invalid routes
+      const isInvalid =
+        html.includes("Route not found") ||
+        html.includes("Page Not Found") ||
+        html.includes("This page doesn't exist") ||
+        html.includes("404") ||
+        html.includes("We couldn't find") ||
+        !html.includes("mountainproject.com");
+
+      // Also check for positive indicators that it IS a valid route page
+      const hasRouteContent =
+        html.includes("route-type") ||
+        html.includes("route-stats") ||
+        html.includes("YDS") ||
+        html.includes("fa-star") ||
+        html.includes("Rating:");
+
+      const isValid = !isInvalid && hasRouteContent;
       validatedRoutes.push({ ...route, isValid });
 
       if (isValid) {
         validCount++;
+        process.stdout.write(".");
       } else {
         invalidCount++;
+        process.stdout.write("x");
       }
     } catch {
       validatedRoutes.push({ ...route, isValid: false });
       invalidCount++;
+      process.stdout.write("x");
     }
 
-    // Rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Slightly longer delay for GET requests
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
 
+  console.log(""); // New line after dots
   console.log(`  ✓ ${validCount} valid, ${invalidCount} invalid`);
 
   // Return only valid routes
