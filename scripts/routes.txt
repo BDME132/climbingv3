@@ -13,4 +13,4 @@ x Wasatch | Ogden Valley
 x FAILED: Wasatch | Randolph
 x Wasatch | Weber Canyon
 x FAILED: Joe's Valley
-Maple Canyon
+x Maple Canyon
