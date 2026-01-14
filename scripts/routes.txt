@@ -8,9 +8,9 @@ x FAILED: Wasatch | Box Elder County
 x Wasatch | Cache Valley
 x Wasatch | Causey Reservoir
 x FAILED: Wasatch | Davis County
-Wasatch | Ogden Canyon
-Wasatch | Ogden Valley
-Wasatch | Randolph
-Wasatch | Weber Canyon
-Joe's Valley
+x Wasatch | Ogden Canyon
+x Wasatch | Ogden Valley
+x FAILED: Wasatch | Randolph
+x Wasatch | Weber Canyon
+x FAILED: Joe's Valley
 Maple Canyon
