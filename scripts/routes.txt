@@ -1,1 +1,14 @@
 x Moe's Valley Southern Utah
+x FAILED: Wasatch | Little Cottonwood Canyon
+x FAILED: Wasatch | Big Cottonwood Canyon
+x FAILED: Wasatch | American Fork Canyon
+x FAILED: Wasatch | Rock Canyon
+x FAILED: Wasatch | Logan Canyon
+x FAILED: Wasatch | Box Elder County
+x Wasatch | Cache Valley
+x Wasatch | Causey Reservoir
+x FAILED: Wasatch | Davis County
+Wasatch | Ogden Canyon
+Wasatch | Ogden Valley
+Wasatch | Randolph
+Wasatch | Weber Canyon
