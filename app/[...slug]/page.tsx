@@ -1,8 +1,10 @@
 import { Main, Section, Container, Prose } from "@/components/ds";
 import { MDXContent } from "@/components/markdown/mdx-content";
 import { Meta } from "@/components/markdown/meta";
+import { ArticleJsonLd } from "@/components/seo/json-ld";
 
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
+import { siteConfig, getAbsoluteUrl } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -32,9 +34,40 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     };
   }
 
+  const url = getAbsoluteUrl(post.permalink);
+  const imageUrl = getAbsoluteUrl(siteConfig.defaultImage);
+
   return {
     title: post.title,
     description: post.description,
+    authors: post.author ? [{ name: post.author }] : undefined,
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.description,
+      url,
+      siteName: siteConfig.name,
+      publishedTime: post.date,
+      authors: post.author ? [post.author] : undefined,
+      tags: post.tags,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+      images: [imageUrl],
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -47,8 +80,17 @@ export default async function Page(props: PageProps) {
     notFound();
   }
 
+  const url = getAbsoluteUrl(post.permalink);
+
   return (
     <Main>
+      <ArticleJsonLd
+        title={post.title}
+        description={post.description}
+        datePublished={post.date}
+        author={post.author}
+        url={url}
+      />
       <Meta
         title={post.title}
         description={post.description}
