@@ -24,8 +24,11 @@ if (fs.existsSync(envLocalPath)) {
 
 const ROUTES_FILE = path.join(PROJECT_ROOT, "scripts", "routes.txt");
 const CONTENT_DIR = path.join(PROJECT_ROOT, "content");
+const STATIC_DIR = path.join(PROJECT_ROOT, "public", "static");
 const EXA_API_KEY = process.env.EXA_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const GOOGLE_CSE_ID = process.env.GOOGLE_CSE_ID;
 const EXA_API_BASE = "https://api.exa.ai/research/v1";
 
 if (!EXA_API_KEY) {
@@ -307,6 +310,48 @@ async function getResearchContent(researchId: string): Promise<string> {
 }
 
 // =============================================================================
+// JSON EXTRACTION HELPER
+// =============================================================================
+
+function extractJSON(text: string): string | null {
+  const trimmed = text.trim();
+
+  // Strategy 1: Already valid JSON
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      JSON.parse(trimmed);
+      return trimmed;
+    } catch {
+      // Not valid JSON, try other strategies
+    }
+  }
+
+  // Strategy 2: JSON in markdown code block
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try {
+      JSON.parse(codeBlockMatch[1].trim());
+      return codeBlockMatch[1].trim();
+    } catch {
+      // Not valid JSON in code block
+    }
+  }
+
+  // Strategy 3: Find JSON object anywhere in text
+  const jsonMatch = trimmed.match(/\{[\s\S]*"routes"[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      JSON.parse(jsonMatch[0]);
+      return jsonMatch[0];
+    } catch {
+      // Not valid JSON
+    }
+  }
+
+  return null;
+}
+
+// =============================================================================
 // PASS 1: ROUTE EXTRACTION
 // =============================================================================
 
@@ -354,40 +399,45 @@ Return a JSON object with this exact structure:
 
 Return ONLY valid JSON, no markdown, no explanations.`;
 
-  try {
-    const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-20250514"),
-      prompt,
-      maxTokens: 4000,
-    });
+  const maxRetries = 3;
+  const ExtractedRoutesSchema = z.object({
+    routes: z.array(RouteSchema),
+  });
 
-    // Parse JSON from response (may have markdown code blocks)
-    let jsonText = text.trim();
-    if (jsonText.startsWith("```")) {
-      // Extract JSON from markdown code block
-      const match = jsonText.match(/```(?:json)?\n([\s\S]*?)\n```/);
-      if (match) {
-        jsonText = match[1];
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { text } = await generateText({
+        model: anthropic("claude-sonnet-4-20250514"),
+        prompt,
+        maxTokens: 8000, // Increased to avoid truncation
+      });
+
+      // Try multiple JSON extraction strategies
+      const jsonText = extractJSON(text);
+      if (!jsonText) {
+        throw new Error("Could not find valid JSON in response");
+      }
+
+      const parsed = JSON.parse(jsonText);
+      const validated = ExtractedRoutesSchema.parse(parsed);
+      console.log(
+        `  ✓ Extracted ${validated.routes.length} routes from research`
+      );
+      return validated.routes;
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : String(error);
+      console.error(`  ✗ Attempt ${attempt}/${maxRetries} failed: ${errorMsg}`);
+
+      if (attempt < maxRetries) {
+        console.log(`  ↻ Retrying in 2 seconds...`);
+        await new Promise((r) => setTimeout(r, 2000));
       }
     }
-
-    const parsed = JSON.parse(jsonText);
-    const ExtractedRoutesSchema = z.object({
-      routes: z.array(RouteSchema),
-    });
-
-    const validated = ExtractedRoutesSchema.parse(parsed);
-    console.log(
-      `  ✓ Extracted ${validated.routes.length} routes from research`
-    );
-    return validated.routes;
-  } catch (error) {
-    console.error("  ✗ Failed to extract routes:", error);
-    if (error instanceof Error) {
-      console.error(`    Error details: ${error.message}`);
-    }
-    return [];
   }
+
+  console.error("  ✗ All extraction attempts failed");
+  return [];
 }
 
 // =============================================================================
