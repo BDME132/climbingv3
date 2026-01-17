@@ -71,7 +71,7 @@ export const NewsletterSection = ({
           <div className="p-4 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
             <p className="font-medium">Thanks for subscribing!</p>
             <p className="text-sm text-primary-foreground/80">
-              Check your inbox for a confirmation email.
+              You&apos;ll receive updates on the latest climbing guides and tips.
             </p>
           </div>
         ) : (
