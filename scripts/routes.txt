@@ -5,16 +5,17 @@ x Little Cottonwood Canyon
 x Big Cottonwood Canyon
 x American Fork Canyon
 x Rock Canyon Provo
-Bells Canyon
-Ferguson Canyon
-Millcreek Canyon
-Mount Olympus
-Gate Buttress Little Cottonwood
-Pfeifferhorn Area
-Storm Mountain
-Lisa Falls
-The Dihedrals Little Cottonwood
-Pentapitch Area Little Cottonwood
+x Bells Canyon
+x Ferguson Canyon
+x Millcreek Canyon
+x Mount Olympus
+x Gate Buttress Little Cottonwood
+x Pfeifferhorn Area
+x Storm Mountain
+x Lisa Falls
+x The Dihedrals Little Cottonwood
+x Pentapitch Area Little Cottonwood
+x 9th Street Crag Ogden
 Logan Canyon
 China Wall Logan Canyon
 Fucoidal Quartzite Logan Canyon
@@ -23,7 +24,6 @@ Right Hand Fork Logan Canyon
 Providence Canyon
 Ogden Canyon
 Ogden Boulder Field
-9th Street Crag Ogden
 The Schoolroom Ogden
 Weber Canyon
 Snowbasin Area

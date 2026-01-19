@@ -12,7 +12,7 @@
 
 ## Core Concept
 
-Unlike Mountain Project's comprehensive database, RockClimbUtah provides a **curated "greatest hits"** selection of 20-25 routes per climbing area, organized by specific criteria to help climbers quickly find appropriate routes without information overload. In the current implementation, each climbing area is represented as **one MDX post** (an article) that follows the content guidelines below; routes are written as structured markdown content inside that post.
+Unlike Mountain Project's comprehensive database, RockClimbUtah provides a **curated "greatest hits"** selection of 25-50 routes per climbing area, organized by specific criteria to help climbers quickly find appropriate routes without information overload. In the current implementation, each climbing area is represented as **one MDX post** (an article) that follows the content guidelines below; routes are written as structured markdown content inside that post.
 
 ---
 
