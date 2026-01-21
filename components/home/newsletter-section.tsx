@@ -18,16 +18,43 @@ export const NewsletterSection = ({
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
+    setErrorMessage("");
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    setStatus("success");
-    setEmail("");
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle already subscribed as success
+        if (response.status === 409) {
+          setStatus("success");
+          setEmail("");
+          return;
+        }
+        throw new Error(data.error || "Failed to subscribe");
+      }
+
+      setStatus("success");
+      setEmail("");
+    } catch (error) {
+      console.error("Subscription error:", error);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Something went wrong"
+      );
+      setStatus("error");
+    }
   };
 
   return (
@@ -44,7 +71,7 @@ export const NewsletterSection = ({
           <div className="p-4 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
             <p className="font-medium">Thanks for subscribing!</p>
             <p className="text-sm text-primary-foreground/80">
-              Check your inbox for a confirmation email.
+              You&apos;ll receive updates on the latest climbing guides and tips.
             </p>
           </div>
         ) : (
@@ -76,7 +103,7 @@ export const NewsletterSection = ({
 
             {status === "error" && (
               <p className="text-sm text-destructive">
-                Something went wrong. Please try again.
+                {errorMessage || "Something went wrong. Please try again."}
               </p>
             )}
 
