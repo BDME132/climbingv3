@@ -1,28 +1,39 @@
 import { Section, Container, Prose } from "@/components/ds";
 import { Logo } from "@/components/site/logo";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import Link from "next/link";
 
 export const Hero = () => {
   return (
-    <Section className="bg-muted/30 border-b py-12 sm:py-20">
-      <Container className="grid gap-8 text-center max-w-3xl">
-        <Logo width={48} className="mx-auto" />
-        <Prose isSpaced className="space-y-4">
+    <Section className="relative border-b py-16 sm:py-24 overflow-hidden">
+      <Image
+        src="/mainrockcanyon copy.jpg"
+        alt="Rock Canyon climbing wall in Utah"
+        fill
+        className="object-cover"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/35" />
+      <Container className="relative z-10 grid gap-8 text-center max-w-3xl">
+        <Logo width={48} className="mx-auto text-white" />
+        <Prose isSpaced className="space-y-4 text-white">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-balance">
-            Your Guide to Climbing Adventures
+            Utah Climbing Routes: What Should I Climb Today?
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Expert beta, gear reviews, and training guides to help you send your
-            projects and explore the world&apos;s best crags.
+          <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto text-pretty">
+            RockClimbUtah is a curated guide to the best routes in every Utah
+            climbing area. Each guide highlights 20-25 &quot;greatest hits&quot;
+            by grade and style, with direct Mountain Project links so you can
+            decide fast and go climb.
           </p>
         </Prose>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
-            <Link href="#featured">Explore Guides</Link>
+            <Link href="/areas">Browse Utah Areas</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="#categories">View Categories</Link>
+          <Button asChild variant="outline" size="lg" className="bg-white/10 text-white border-white/40 hover:bg-white/20">
+            <Link href="#how-it-works">How It Works</Link>
           </Button>
         </div>
       </Container>
