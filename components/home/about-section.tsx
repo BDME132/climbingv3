@@ -1,6 +1,4 @@
 import { Section, Container, Prose } from "@/components/ds";
-import Image from "next/image";
-
 export const AboutSection = () => {
   return (
     <Section id="how-it-works" className="py-12 sm:py-16 bg-muted/30">
@@ -45,15 +43,7 @@ export const AboutSection = () => {
             </ul>
           </div>
 
-          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
-            <Image
-              src="/images/how-it-works.png"
-              alt="Climbers gearing up at a limestone wall in Utah"
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 50vw, 100vw"
-            />
-          </div>
+          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border bg-muted" />
         </div>
       </Container>
     </Section>

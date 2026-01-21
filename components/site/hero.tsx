@@ -8,7 +8,7 @@ export const Hero = () => {
   return (
     <Section className="relative border-b py-16 sm:py-24 overflow-hidden">
       <Image
-        src="/mainrockcanyon copy.jpg"
+        src="/images/clmbg.avif"
         alt="Rock Canyon climbing wall in Utah"
         fill
         className="object-cover"
