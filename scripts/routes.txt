@@ -16,9 +16,9 @@ x Lisa Falls
 x The Dihedrals Little Cottonwood
 x Pentapitch Area Little Cottonwood
 x 9th Street Crag Ogden
-Logan Canyon
-China Wall Logan Canyon
-Fucoidal Quartzite Logan Canyon
+x FAILED: Logan Canyon
+x China Wall Logan Canyon
+x Fucoidal Quartzite Logan Canyon
 Blacksmith Fork Canyon
 Right Hand Fork Logan Canyon
 Providence Canyon
