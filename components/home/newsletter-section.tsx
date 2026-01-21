@@ -11,8 +11,8 @@ interface NewsletterSectionProps {
 }
 
 export const NewsletterSection = ({
-  title = "Stay in the Loop",
-  description = "Get the latest guides, gear reviews, and training tips delivered to your inbox. No spam, just climbing.",
+  title = "Get New Utah Area Guides",
+  description = "Monthly updates when new Utah climbing areas and route lists go live. No spam, just the good stuff.",
 }: NewsletterSectionProps) => {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<
