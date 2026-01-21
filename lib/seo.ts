@@ -1,10 +1,10 @@
 export const siteConfig = {
-  name: "MDX Starter",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://example.com",
-  defaultAuthor: "Bridger Tower",
+  name: "RockClimbUtah",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://rockclimbutah.com",
+  defaultAuthor: "RockClimbUtah",
   defaultImage: "/og-image.png",
   description:
-    "MDX and Next.js Starter made by Bridger Tower at 9d8 and WIP / AC",
+    "Curated route guides for Utah climbing areas. Find the best routes at every grade without the information overload.",
 };
 
 export function getAbsoluteUrl(path: string): string {

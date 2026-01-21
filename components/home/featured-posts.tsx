@@ -2,19 +2,34 @@ import { Section, Container } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/mdx";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { Post } from "#site/content";
 
 interface FeaturedPostsProps {
   posts: Post[];
   title?: string;
+  description?: string;
   limit?: number;
+  sectionId?: string;
+  showViewAll?: boolean;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }
 
 export const FeaturedPosts = ({
   posts,
-  title = "Featured Guides",
+  title = "Recent Guides",
+  description,
   limit = 3,
+  sectionId = "featured",
+  showViewAll = false,
+  viewAllHref = "/posts",
+  viewAllLabel = "View All",
+  ctaLabel,
+  ctaHref,
 }: FeaturedPostsProps) => {
   const featuredPosts = posts.slice(0, limit);
 
@@ -23,21 +38,33 @@ export const FeaturedPosts = ({
   }
 
   return (
-    <Section id="featured" className="py-12 sm:py-16">
-      <Container className="space-y-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-            {title}
-          </h2>
-          <Button asChild variant="ghost">
-            <Link href="/posts">View All</Link>
-          </Button>
+    <Section id={sectionId} className="py-12 sm:py-16">
+      <Container className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+              {title}
+            </h2>
+            {description && (
+              <p className="text-muted-foreground max-w-2xl">
+                {description}
+              </p>
+            )}
+          </div>
+          {showViewAll && (
+            <Button asChild variant="ghost">
+              <Link href={viewAllHref}>{viewAllLabel}</Link>
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {featuredPosts.map((post) => (
             <FeaturedPostCard key={post.slug} post={post} />
           ))}
+          {ctaLabel && ctaHref && (
+            <CtaCard label={ctaLabel} href={ctaHref} />
+          )}
         </div>
       </Container>
     </Section>
@@ -77,6 +104,36 @@ const FeaturedPostCard = ({ post }: { post: Post }) => {
         >
           {formatDate(post.date)}
         </time>
+      </div>
+    </Link>
+  );
+};
+
+const CtaCard = ({ label, href }: { label: string; href: string }) => {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group block rounded-3xl p-5 transition-all",
+        "border-2 border-primary/70 bg-primary text-primary-foreground",
+        "shadow-lg shadow-primary/15 hover:shadow-xl hover:bg-primary/90"
+      )}
+    >
+      <div className="h-full min-h-[172px] flex flex-col justify-between">
+        <div>
+          <div className="text-sm font-medium text-primary-foreground/70 uppercase tracking-wider">
+            All Areas
+          </div>
+          <h3 className="mt-2 text-lg font-semibold text-primary-foreground">
+            Browse every Utah area guide
+          </h3>
+          <p className="mt-2 text-sm text-primary-foreground/80">
+            See the full library of curated route lists.
+          </p>
+        </div>
+        <div className="mt-4 text-sm font-semibold text-primary-foreground">
+          {label} -&gt;
+        </div>
       </div>
     </Link>
   );

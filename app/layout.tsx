@@ -10,32 +10,49 @@ import "./globals.css";
 
 import { cn } from "@/lib/utils";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rockclimbutah.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "MDX Starter Template for Building Websites",
-    template: "%s | MDX Starter",
+    default: "RockClimbUtah - Curated Route Guides for Utah Climbing",
+    template: "%s | RockClimbUtah",
   },
   description:
-    "MDX and Next.js Starter made by Bridger Tower at 9d8 and WIP / AC",
+    "Find the best climbing routes in Utah. Curated guides for Rock Canyon, American Fork, Little Cottonwood, and more. No information overload - just the routes worth climbing.",
+  keywords: [
+    "Utah climbing",
+    "rock climbing Utah",
+    "Utah climbing routes",
+    "Rock Canyon climbing",
+    "American Fork Canyon climbing",
+    "Little Cottonwood climbing",
+    "Wasatch climbing",
+    "Utah sport climbing",
+    "Utah trad climbing",
+  ],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "MDX Starter",
+    siteName: "RockClimbUtah",
+    title: "RockClimbUtah - Curated Route Guides for Utah Climbing",
+    description:
+      "Find the best climbing routes in Utah. Curated guides with the greatest hits at every grade.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "MDX Starter",
+        alt: "RockClimbUtah - Utah Climbing Route Guides",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
+    title: "RockClimbUtah - Curated Route Guides",
+    description:
+      "Find the best climbing routes in Utah. Curated guides for Rock Canyon, American Fork, Little Cottonwood, and more.",
   },
   robots: {
     index: true,
