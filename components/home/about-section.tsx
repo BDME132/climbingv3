@@ -10,14 +10,14 @@ export const AboutSection = () => {
                 How It Works
               </span>
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                Pick an Area, Choose a Grade, Climb the Classics
+                Pick an Area, Choose a Route, and Climb
               </h2>
             </div>
 
             <Prose className="text-muted-foreground space-y-4">
               <p>
-                Every Utah area guide is a curated &quot;greatest hits&quot; list
-                of 20-25 routes. We focus on quality, popularity, and approach
+                Every Utah area guide is a curated list
+                of 30-50 routes. We focus on quality, popularity, and approach
                 simplicity so you can make a plan quickly.
               </p>
               <p>

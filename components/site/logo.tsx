@@ -1,8 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
-
-import LogoDark from "@/public/logo-dark.svg";
-
 export const Logo = ({
   href = "/",
   width = 72,
@@ -14,15 +9,9 @@ export const Logo = ({
   height?: number;
   className?: string;
 }) => {
-  return (
-    <Link href={href} className={className}>
-      <Image
-        width={width}
-        height={height}
-        src={LogoDark}
-        alt="Italy Vita Logo"
-        className="hidden dark:block"
-      />
-    </Link>
-  );
+  void href;
+  void width;
+  void height;
+  void className;
+  return null;
 };
