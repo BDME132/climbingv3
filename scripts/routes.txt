@@ -150,11 +150,11 @@ x Steinaker Reservoir Area
 x Axe Handle Canyon
 x Ephraim Canyon
 x Fishlake National Forest Climbing
-Huntington Canyon
-Maple Grove Climbing Utah
-Redmond Rocks
-Salt Creek Canyon Utah
-Skyline Boulders
+x Huntington Canyon
+x Maple Grove Climbing Utah
+x Redmond Rocks
+x Salt Creek Canyon Utah
+x Skyline Boulders
 Wales Canyon
 Wood Hill Utah
 Log Canyon Utah
