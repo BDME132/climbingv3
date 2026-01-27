@@ -33,7 +33,9 @@ export default function HomePage() {
         ctaHref="/areas"
       />
       <AboutSection />
-      <CategoriesSection />
+      <div className="hidden sm:block">
+        <CategoriesSection />
+      </div>
       <NewsletterSection />
     </Main>
   );
