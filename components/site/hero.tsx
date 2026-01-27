@@ -7,13 +7,7 @@ import Link from "next/link";
 export const Hero = () => {
   return (
     <Section className="relative border-b py-16 sm:py-24 overflow-hidden">
-      <Image
-       src="/images/2-head.png"
-       alt="Rock Canyon climbing wall in Utah"
-       fill
-       className="object-cover brightness-120"
-       priority
-     />
+      
       <div className="absolute inset-0 bg-black/35" />
       <Container className="relative z-10 grid gap-8 text-center max-w-3xl">
         <Logo width={48} className="mx-auto text-white" />
