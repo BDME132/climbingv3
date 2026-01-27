@@ -46,13 +46,13 @@ export function Code({
     <div className="relative group">
       <button
         onClick={copyToClipboard}
-        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+        className="absolute right-2 top-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-2.5 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
         aria-label="Copy code"
       >
         {hasCopied ? (
-          <Check className="h-3.5 w-3.5" />
+          <Check className="h-4 w-4" />
         ) : (
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-4 w-4" />
         )}
       </button>
 

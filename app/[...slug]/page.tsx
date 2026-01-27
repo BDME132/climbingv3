@@ -2,6 +2,7 @@ import { Main, Section, Container, Prose } from "@/components/ds";
 import { MDXContent } from "@/components/markdown/mdx-content";
 import { Meta } from "@/components/markdown/meta";
 import { ArticleJsonLd } from "@/components/seo/json-ld";
+import { ArticleToc } from "@/components/markdown/article-toc";
 
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
 import { siteConfig, getAbsoluteUrl } from "@/lib/seo";
@@ -106,6 +107,7 @@ export default async function Page(props: PageProps) {
           </Prose>
         </Container>
       </Section>
+      <ArticleToc />
     </Main>
   );
 }

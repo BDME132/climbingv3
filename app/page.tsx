@@ -25,7 +25,7 @@ export default function HomePage() {
       <Hero />
       <FeaturedPosts
         posts={posts}
-        title="Recent Utah Area Guides"
+        title="Popular Utah Area Guides"
         description="Curated route lists for Rock Canyon, American Fork, Little Cottonwood, and more."
         limit={2}
         sectionId="areas"
