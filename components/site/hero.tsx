@@ -12,7 +12,7 @@ export const Hero = () => {
       <Container className="relative z-10 grid gap-8 text-center max-w-3xl">
         <Logo width={48} className="mx-auto text-white" />
         <Prose isSpaced className="space-y-4 text-white">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-balance text-[#555555]">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-balance text-[#555555] animate-gentle-sway">
             What Should I Climb Today?
           </h1>
           
