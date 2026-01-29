@@ -6,7 +6,7 @@ import { NewsletterSection } from "@/components/home/newsletter-section";
 import { Main } from "@/components/ds";
 import { WebSiteJsonLd } from "@/components/seo/json-ld";
 
-import { getAllPosts, getPostsByTag } from "@/lib/posts";
+import { getAllPosts, getPostsByTagSortedByPopularity } from "@/lib/posts";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  const areaPosts = getPostsByTag("area");
+  const areaPosts = getPostsByTagSortedByPopularity("area");
   const posts = areaPosts.length > 0 ? areaPosts : getAllPosts();
 
   return (

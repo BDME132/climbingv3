@@ -58,7 +58,7 @@ export const FeaturedPosts = ({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {featuredPosts.map((post) => (
             <FeaturedPostCard key={post.slug} post={post} />
           ))}
@@ -114,25 +114,26 @@ const CtaCard = ({ label, href }: { label: string; href: string }) => {
     <Link
       href={href}
       className={cn(
-        "group block rounded-3xl p-5 transition-all",
-        "border-2 border-primary/70 bg-primary text-primary-foreground",
-        "shadow-lg shadow-primary/15 hover:shadow-xl hover:bg-primary/90"
+        "group block rounded-lg p-5 transition-all",
+        "border-l-4 border-l-primary border border-primary/20",
+        "bg-primary/5 hover:bg-primary/10 hover:shadow-md"
       )}
     >
       <div className="h-full min-h-[172px] flex flex-col justify-between">
         <div>
-          <div className="text-sm font-medium text-primary-foreground/70 uppercase tracking-wider">
+          <div className="text-xs font-semibold text-primary uppercase tracking-wider">
             All Areas
           </div>
-          <h3 className="mt-2 text-lg font-semibold text-primary-foreground">
+          <h3 className="mt-2 text-lg font-semibold leading-snug">
             Browse every Utah area guide
           </h3>
-          <p className="mt-2 text-sm text-primary-foreground/80">
+          <p className="mt-2 text-sm text-muted-foreground">
             See the full library of curated route lists.
           </p>
         </div>
-        <div className="mt-4 text-sm font-semibold text-primary-foreground">
-          {label} -&gt;
+        <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+          {label}
+          <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
         </div>
       </div>
     </Link>

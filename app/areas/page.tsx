@@ -1,6 +1,6 @@
 import { Main, Section, Container, Prose } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { getAllPosts, getPostsByTag } from "@/lib/posts";
+import { getAllPosts, getPostsByTagSortedByPopularity } from "@/lib/posts";
 import { AreaSearch } from "@/components/areas/area-search";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function AreasPage() {
-  const areaPosts = getPostsByTag("area");
+  const areaPosts = getPostsByTagSortedByPopularity("area");
   const posts = areaPosts.length > 0 ? areaPosts : getAllPosts();
 
   return (

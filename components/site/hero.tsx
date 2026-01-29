@@ -19,7 +19,7 @@ export const Hero = () => {
         </Prose>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
-            <Link href="/areas">Search Utah Areas</Link>
+            <Link href="/areas">Ideas</Link>
           </Button>
           <Button
             asChild

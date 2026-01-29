@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import type { Post } from "#site/content";
 
 // Damerau-Levenshtein edit distance (counts adjacent transpositions as 1 edit)
@@ -81,8 +82,19 @@ interface AreaSearchProps {
   posts: Post[];
 }
 
+const CLIMBING_STYLE_FILTERS = ["trad", "sport", "bouldering"];
+
 export function AreaSearch({ posts }: AreaSearchProps) {
   const [query, setQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+  function toggleFilter(filter: string) {
+    setActiveFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter]
+    );
+  }
 
   const searchablePosts = useMemo(
     () => posts.map(buildSearchablePost),
@@ -90,20 +102,34 @@ export function AreaSearch({ posts }: AreaSearchProps) {
   );
 
   const filteredPosts = useMemo(() => {
+    // Apply tag filters first (AND logic - must have ALL selected tags)
+    let results = posts;
+    let filteredSearchable = searchablePosts;
+
+    if (activeFilters.length > 0) {
+      results = results.filter((post) =>
+        activeFilters.every((filter) => post.tags?.includes(filter))
+      );
+      filteredSearchable = searchablePosts.filter((sp) =>
+        activeFilters.every((filter) => sp.post.tags?.includes(filter))
+      );
+    }
+
+    // Apply search
     const trimmed = query.trim();
-    if (!trimmed) return posts;
+    if (!trimmed) return results;
 
     const queryWords = trimmed.toLowerCase().split(/\s+/).filter(Boolean);
 
     const scored: { post: Post; score: number }[] = [];
-    for (const sp of searchablePosts) {
+    for (const sp of filteredSearchable) {
       const s = scorePost(queryWords, sp);
       if (s !== null) scored.push({ post: sp.post, score: s });
     }
 
     scored.sort((a, b) => b.score - a.score);
     return scored.map((s) => s.post);
-  }, [query, posts, searchablePosts]);
+  }, [query, posts, searchablePosts, activeFilters]);
 
   return (
     <div className="space-y-6">
@@ -122,6 +148,24 @@ export function AreaSearch({ posts }: AreaSearchProps) {
         />
       </div>
 
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground">Filters:</span>
+        {CLIMBING_STYLE_FILTERS.map((filter) => (
+          <button
+            key={filter}
+            onClick={() => toggleFilter(filter)}
+            className={cn(
+              "px-3 py-1 text-sm rounded-full border transition-colors",
+              activeFilters.includes(filter)
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-input hover:border-primary/50"
+            )}
+          >
+            {filter}
+          </button>
+        ))}
+      </div>
+
       {filteredPosts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts.map((post) => (
@@ -130,7 +174,13 @@ export function AreaSearch({ posts }: AreaSearchProps) {
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          <p>No areas found matching &quot;{query}&quot;</p>
+          <p>
+            No areas found
+            {query && <> matching &quot;{query}&quot;</>}
+            {activeFilters.length > 0 && (
+              <> with {activeFilters.join(" + ")} climbing</>
+            )}
+          </p>
         </div>
       )}
     </div>

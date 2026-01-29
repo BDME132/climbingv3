@@ -16,9 +16,9 @@ export const AboutSection = () => {
 
             <Prose className="text-muted-foreground space-y-4">
               <p>
-                Every Utah area guide is a curated list
-                of 30-50 routes. We focus on quality, popularity, and approach
-                simplicity so you can make a plan quickly.
+              Need ideas on what to climb? Every Utah area guide is a curated list
+                of 30-50 routes for you to choose from. We focus on quality, popularity, and approach
+                simplicity so you can make a plan quickly. All you have to do is choose.
               </p>
               <p>
                 Routes are grouped into familiar categories like beginner,
