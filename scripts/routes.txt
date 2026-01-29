@@ -155,45 +155,45 @@ x Maple Grove Climbing Utah
 x Redmond Rocks
 x Salt Creek Canyon Utah
 x Skyline Boulders
-Wales Canyon
-Wood Hill Utah
-Log Canyon Utah
-Bald Mountain Uintas
-Ruth Lake Uintas
-Hayden Peak Uintas
-Grand Staircase Escalante
-Glen Canyon Climbing
-Henry Mountains Climbing
-The Jungle Aquarius Plateau
-Bartlett Wash Moab
-Comb Ridge Utah
-Valley of the Gods
-La Sal Mountains
-Onion Creek Moab
-Sand Flats Moab
-Tusher Canyon
-Sunshine Wall Moab
-Donnelly Canyon Indian Creek
-Supercrack Buttress Indian Creek
-Sister Superior Castle Valley
-Crackhouse Moab
-Gooseberry Mesa
-Brian Head Climbing
-Kanab Area Climbing
-Turtle Wall St George
-Red Arch Mountain Zion
-Cerberus Gendarme Zion
-Cedar Canyon Ice Climbing
-Coffin Buttress Little Cottonwood
-Bongeater Buttress Little Cottonwood
-Crescent Crack Buttress Little Cottonwood
-Green Adjective Gully Little Cottonwood
-Question Mark Wall Wasatch
-Albion Basin Little Cottonwood
-Peruvian Buttress Little Cottonwood
-Antelope Island Climbing
-Devil's Playground Utah
-Stansbury Mountains Climbing
-Oquirrh Mountains Climbing
-Confusion Range Utah
-Desert Mountain Utah
+x Wales Canyon
+x Wood Hill Utah
+x Log Canyon Utah
+x Bald Mountain Uintas
+x Ruth Lake Uintas
+x Hayden Peak Uintas
+x FAILED: Grand Staircase Escalante
+x Glen Canyon Climbing
+x Henry Mountains Climbing
+x The Jungle Aquarius Plateau
+x Bartlett Wash Moab
+x Comb Ridge Utah
+x Valley of the Gods
+x FAILED: La Sal Mountains
+x Onion Creek Moab
+x Sand Flats Moab
+x Tusher Canyon
+x Sunshine Wall Moab
+x Donnelly Canyon Indian Creek
+x Supercrack Buttress Indian Creek
+x Sister Superior Castle Valley
+x Crackhouse Moab
+x Gooseberry Mesa
+x Brian Head Climbing
+x Kanab Area Climbing
+x Turtle Wall St George
+x Red Arch Mountain Zion
+x Cerberus Gendarme Zion
+x FAILED: Cedar Canyon Ice Climbing
+x Coffin Buttress Little Cottonwood
+x Bongeater Buttress Little Cottonwood
+x Crescent Crack Buttress Little Cottonwood
+x Green Adjective Gully Little Cottonwood
+x Question Mark Wall Wasatch
+x Albion Basin Little Cottonwood
+x Peruvian Buttress Little Cottonwood
+x Antelope Island Climbing
+x Devil's Playground Utah
+x FAILED: Stansbury Mountains Climbing
+x Oquirrh Mountains Climbing
+x Confusion Range Utah
+x Desert Mountain Utah
