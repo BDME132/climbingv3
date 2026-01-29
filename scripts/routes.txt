@@ -16,134 +16,184 @@ x Lisa Falls
 x The Dihedrals Little Cottonwood
 x Pentapitch Area Little Cottonwood
 x 9th Street Crag Ogden
-x FAILED: Logan Canyon
+x Logan Canyon Climbing Utah
 x China Wall Logan Canyon
 x Fucoidal Quartzite Logan Canyon
-Blacksmith Fork Canyon
-Right Hand Fork Logan Canyon
-Providence Canyon
-Ogden Canyon
-Ogden Boulder Field
-The Schoolroom Ogden
-Weber Canyon
-Snowbasin Area
-Waterfall Canyon Ogden
-The Hinterlands Rock Canyon
-Little Rock Canyon Boulders
-Santaquin Canyon
-Slate Canyon
-Hobble Creek Canyon
-Y Mountain Provo
-Squaw Peak Road
-San Rafael Swell
-Buckhorn Wash
-The Wedge San Rafael
-Price Canyon
-Ibex
-Notch Peak
-House Range
-Mineral Mountains
-Clear Creek Canyon Utah
-Snow Canyon State Park
-Black Rocks St. George
-Pioneer Park St. George
-Crawdad Canyon
-Woodbury Desert
-Chuckawalla Wall St. George
-Red Cliffs Desert Reserve
-Virgin River Gorge
-Bloomington St. George
-Green Valley Gap
-Paradise Canyon St. George
-Cougar Cliffs St. George
-Swett Hill Cedar City
-Graveside Wall Cedar City
-Hurricave Hurricane
-Parowan Gap
-Three Peaks Cedar City
-Cedar Breaks
-Zion National Park
-Kolob Canyon
-Lambs Knoll Zion
-Checkerboard Mesa Zion
-The Watchman Zion
-Moonlight Buttress Zion
-Touchstone Wall Zion
-Pine Creek Canyon Zion
-Springdale Sandstone
-Indian Creek
-Wall Street Moab
-Potash Road
-Kane Creek Canyon
-Mill Creek Moab
-Castle Valley
-Fisher Towers
-Castleton Tower
-River Road Moab
-Big Bend Moab
-Ice Cream Parlor Moab
-Poison Spider Mesa
-Long Canyon Moab
-Day Canyon
-Arches National Park Climbing
-Corona Arch Area
-North Six Shooter
-South Six Shooter
-Moses Tower Canyonlands
-Zeus Tower Canyonlands
-Aphrodite Tower
-Bridger Jacks
-Ancient Art Fisher Towers
-Titan Tower Fisher Towers
-Echo Tower Fisher Towers
-The Lighthouse Tower
-Monster Tower Canyonlands
-Washer Woman Tower
-Standing Rock Canyonlands
-Uinta Mountains Climbing
-Lone Peak Cirque
-Pfeifferhorn
-Box Elder Canyon
-Farmington Canyon
-City Creek Canyon
-Dry Canyon Salt Lake
-Parley's Canyon
-Emigration Canyon Climbing
-Bountiful Peak Area
-Davis County Foothills
-Capitol Reef Climbing
-Calf Creek
-Escalante Petrified Forest
-Boulder Mountain Area
-Thousand Lake Mountain
-Cathedral Valley
-Robbers Roost
-Goblin Valley Area
-Little Wild Horse Canyon Area
-Temple Mountain
-Factory Butte Area
-Hanksville Towers
-Green River Towers
-Book Cliffs
-Nine Mile Canyon
-Desolation Canyon
-Tavaputs Plateau
-Helper Area Climbing
-Spanish Fork Canyon
-Diamond Fork
-Thistle Area
-Soldier Summit Area
-Current Creek
-Duchesne Area
-Ashley National Forest Climbing
-Flaming Gorge Climbing
-Manila Utah Area
-Dutch John Climbing
-Browns Park Utah
-Dinosaur National Monument Climbing
-Vernal Area Climbing
-Fantasy Canyon Climbing
-Split Mountain
-Dry Fork Canyon Vernal
-Red Fleet Reservoir Area
-Steinaker Reservoir Area
+x Blacksmith Fork Canyon
+x Right Hand Fork Logan Canyon
+x Providence Canyon
+x Ogden Canyon
+x Ogden Boulder Field
+x The Schoolroom Ogden
+x Weber Canyon
+x Snowbasin Area
+x Waterfall Canyon Ogden
+x The Hinterlands Rock Canyon
+x Little Rock Canyon Boulders
+x Santaquin Canyon
+x Slate Canyon
+x Hobble Creek Canyon
+x Y Mountain Provo
+x Squaw Peak Road
+x San Rafael Swell
+x Buckhorn Wash
+x The Wedge San Rafael
+x Price Canyon
+x Ibex
+x Notch Peak
+x House Range
+x Mineral Mountains
+x Clear Creek Canyon Utah
+x Snow Canyon State Park
+x Black Rocks St. George
+x Pioneer Park St. George
+x Crawdad Canyon
+x Woodbury Desert
+x Chuckawalla Wall St. George
+x Red Cliffs Desert Reserve
+x Virgin River Gorge
+x Bloomington St. George
+x Green Valley Gap
+x Paradise Canyon St. George
+x Cougar Cliffs St. George
+x Swett Hill Cedar City
+x Graveside Wall Cedar City
+x Hurricave Hurricane
+x Parowan Gap
+x Three Peaks Cedar City
+x Cedar Breaks
+x Zion National Park
+x Kolob Canyon
+x Lambs Knoll Zion
+x Checkerboard Mesa Zion
+x The Watchman Zion
+x Moonlight Buttress Zion
+x Touchstone Wall Zion
+x Pine Creek Canyon Zion
+x Springdale Sandstone
+x Indian Creek
+x Wall Street Moab
+x Potash Road
+x Kane Creek Canyon
+x Mill Creek Moab
+x Castle Valley
+x Fisher Towers
+x Castleton Tower
+x River Road Moab
+x Big Bend Moab
+x Ice Cream Parlor Moab
+x Poison Spider Mesa
+x Long Canyon Moab
+x Day Canyon
+x Arches National Park Climbing
+x Corona Arch Area
+x North Six Shooter
+x South Six Shooter
+x Moses Tower Canyonlands
+x Zeus Tower Canyonlands
+x Aphrodite Tower
+x Bridger Jacks
+x Ancient Art Fisher Towers
+x Titan Tower Fisher Towers
+x Echo Tower Fisher Towers
+x The Lighthouse Tower
+x Monster Tower Canyonlands
+x Washer Woman Tower
+x Standing Rock Canyonlands
+x Uinta Mountains Climbing
+x Lone Peak Cirque
+x Pfeifferhorn
+x Box Elder Canyon
+x Farmington Canyon
+x City Creek Canyon
+x Dry Canyon Salt Lake
+x Parley's Canyon
+x Emigration Canyon Climbing
+x Bountiful Peak Area
+x Davis County Foothills
+x Capitol Reef Climbing
+x Calf Creek
+x Escalante Petrified Forest
+x Boulder Mountain Area
+x Thousand Lake Mountain
+x Cathedral Valley
+x Robbers Roost
+x Goblin Valley Area
+x Little Wild Horse Canyon Area
+x Temple Mountain
+x Factory Butte Area
+x Hanksville Towers
+x Green River Towers
+x Book Cliffs
+x Nine Mile Canyon
+x Desolation Canyon
+x Tavaputs Plateau
+x Helper Area Climbing
+x Spanish Fork Canyon
+x Diamond Fork
+x Thistle Area
+x Soldier Summit Area
+x Current Creek
+x Duchesne Area
+x Ashley National Forest Climbing
+x Flaming Gorge Climbing
+x Manila Utah Area
+x Dutch John Climbing
+x Browns Park Utah
+x Dinosaur National Monument Climbing
+x Vernal Area Climbing
+x Fantasy Canyon Climbing
+x Split Mountain
+x Dry Fork Canyon Vernal
+x Red Fleet Reservoir Area
+x Steinaker Reservoir Area
+x Axe Handle Canyon
+x Ephraim Canyon
+x Fishlake National Forest Climbing
+x Huntington Canyon
+x Maple Grove Climbing Utah
+x Redmond Rocks
+x Salt Creek Canyon Utah
+x Skyline Boulders
+x Wales Canyon
+x Wood Hill Utah
+x Log Canyon Utah
+x Bald Mountain Uintas
+x Ruth Lake Uintas
+x Hayden Peak Uintas
+x FAILED: Grand Staircase Escalante
+x Glen Canyon Climbing
+x Henry Mountains Climbing
+x The Jungle Aquarius Plateau
+x Bartlett Wash Moab
+x Comb Ridge Utah
+x Valley of the Gods
+x FAILED: La Sal Mountains
+x Onion Creek Moab
+x Sand Flats Moab
+x Tusher Canyon
+x Sunshine Wall Moab
+x Donnelly Canyon Indian Creek
+x Supercrack Buttress Indian Creek
+x Sister Superior Castle Valley
+x Crackhouse Moab
+x Gooseberry Mesa
+x Brian Head Climbing
+x Kanab Area Climbing
+x Turtle Wall St George
+x Red Arch Mountain Zion
+x Cerberus Gendarme Zion
+x FAILED: Cedar Canyon Ice Climbing
+x Coffin Buttress Little Cottonwood
+x Bongeater Buttress Little Cottonwood
+x Crescent Crack Buttress Little Cottonwood
+x Green Adjective Gully Little Cottonwood
+x Question Mark Wall Wasatch
+x Albion Basin Little Cottonwood
+x Peruvian Buttress Little Cottonwood
+x Antelope Island Climbing
+x Devil's Playground Utah
+x FAILED: Stansbury Mountains Climbing
+x Oquirrh Mountains Climbing
+x Confusion Range Utah
+x Desert Mountain Utah
