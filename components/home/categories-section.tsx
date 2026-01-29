@@ -64,7 +64,7 @@ export const CategoriesSection = ({
       <Container className="space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-            Route Categories You&apos;ll See in Every Area
+            Route Categories You&apos;ll See in the Areas
           </h2>
           <p className="text-muted-foreground">
             Consistent groupings make it fast to choose a route by grade, style,
