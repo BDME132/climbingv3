@@ -1,21 +1,13 @@
 {
-  "name": "mdx-starter",
+  "name": "rockclimbutah",
   "version": "0.1.0",
-  "description": "A modern MDX starter template with Next.js, Velite, and Tailwind CSS",
-  "author": "Bridger Tower",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/brijr/mdx.git"
-  },
+  "description": "Utah climbing route guides - curated guides for Utah climbing areas",
   "keywords": [
-    "mdx",
-    "nextjs",
-    "velite",
-    "tailwindcss",
-    "typescript",
-    "blog",
-    "starter",
-    "template"
+    "utah climbing",
+    "rock climbing",
+    "climbing routes",
+    "utah",
+    "climbing guide"
   ],
   "imports": {
     "#site/content": "./.velite/index.js"
