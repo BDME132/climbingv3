@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
     const { error: emailError } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "newsletter@resend.dev",
       to: email,
-      subject: "Welcome to the Stuttgart Climbing Newsletter!",
+      subject: "Welcome to RockClimbUtah!",
       html: `
         <h1>Thanks for subscribing!</h1>
-        <p>You'll receive the latest climbing guides, gear reviews, and training tips.</p>
-        <p>No spam, just climbing content you'll love.</p>
+        <p>You'll receive the latest Utah climbing guides and route recommendations.</p>
+        <p>No spam, just the routes worth climbing.</p>
       `,
     });
 
