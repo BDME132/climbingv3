@@ -83,6 +83,16 @@ interface AreaSearchProps {
 }
 
 const CLIMBING_STYLE_FILTERS = ["trad", "sport", "bouldering"];
+const REGION_FILTERS = [
+  "salt lake",
+  "utah valley",
+  "northern utah",
+  "central utah",
+  "southeast utah",
+  "southwest utah",
+  "zion",
+  "uintas",
+];
 
 export function AreaSearch({ posts }: AreaSearchProps) {
   const [query, setQuery] = useState("");
@@ -148,22 +158,41 @@ export function AreaSearch({ posts }: AreaSearchProps) {
         />
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm text-muted-foreground">Filters:</span>
-        {CLIMBING_STYLE_FILTERS.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => toggleFilter(filter)}
-            className={cn(
-              "px-3 py-1 text-sm rounded-full border transition-colors",
-              activeFilters.includes(filter)
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background text-muted-foreground border-input hover:border-primary/50"
-            )}
-          >
-            {filter}
-          </button>
-        ))}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground w-16">Style:</span>
+          {CLIMBING_STYLE_FILTERS.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => toggleFilter(filter)}
+              className={cn(
+                "px-3 py-1 text-sm rounded-full border transition-colors capitalize",
+                activeFilters.includes(filter)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-input hover:border-primary/50"
+              )}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground w-16">Region:</span>
+          {REGION_FILTERS.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => toggleFilter(filter)}
+              className={cn(
+                "px-3 py-1 text-sm rounded-full border transition-colors capitalize",
+                activeFilters.includes(filter)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-input hover:border-primary/50"
+              )}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filteredPosts.length > 0 ? (
